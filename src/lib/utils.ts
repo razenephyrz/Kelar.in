@@ -28,23 +28,23 @@ export function timeAgo(iso: string): string {
 	const d = new Date(iso).getTime();
 	const now = Date.now();
 	const diff = now - d;
-	if (diff < 0) return 'just now';
+	if (diff < 0) return 'baru saja';
 	const mins = Math.floor(diff / 60000);
-	if (mins < 1) return 'just now';
-	if (mins < 60) return `${mins}m ago`;
+	if (mins < 1) return 'baru saja';
+	if (mins < 60) return `${mins} menit lalu`;
 	const hrs = Math.floor(mins / 60);
-	if (hrs < 24) return `${hrs}h ago`;
+	if (hrs < 24) return `${hrs} jam lalu`;
 	const days = Math.floor(hrs / 24);
-	if (days === 1) return 'yesterday';
-	if (days < 30) return `${days}d ago`;
+	if (days === 1) return 'kemarin';
+	if (days < 30) return `${days} hari lalu`;
 	const months = Math.floor(days / 30);
-	if (months < 12) return `${months}mo ago`;
-	return `${Math.floor(months / 12)}y ago`;
+	if (months < 12) return `${months} bulan lalu`;
+	return `${Math.floor(months / 12)} tahun lalu`;
 }
 
 export function formatDate(iso: string): string {
 	const d = new Date(iso);
-	return d.toLocaleDateString('en-GB', {
+	return d.toLocaleDateString('id-ID', {
 		day: 'numeric',
 		month: 'short',
 		year: 'numeric'
@@ -54,13 +54,13 @@ export function formatDate(iso: string): string {
 export function formatDateTime(iso: string): string {
 	const d = new Date(iso);
 	return (
-		d.toLocaleDateString('en-GB', {
+		d.toLocaleDateString('id-ID', {
 			day: 'numeric',
 			month: 'short',
 			year: 'numeric'
 		}) +
 		' · ' +
-		d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+		d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
 	);
 }
 
