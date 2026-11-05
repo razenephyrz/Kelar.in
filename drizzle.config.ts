@@ -13,7 +13,7 @@ export default defineConfig({
 		user: decodeURIComponent(u.username),
 		password: decodeURIComponent(u.password),
 		database: u.pathname.slice(1),
-		ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+		ssl: { rejectUnauthorized: true }
 	},
 	verbose: true,
 	strict: true

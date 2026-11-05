@@ -8,9 +8,8 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<title>CivicFlow — Every document. Every step. Clear progress.</title>
+	<meta name="description" content="Track administrative requests with clarity." />
 </svelte:head>
-
-
-
 
 {@render children()}
