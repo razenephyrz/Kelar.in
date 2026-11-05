@@ -1,4 +1,4 @@
-export type Role = 'citizen' | 'admin';
+export type Role = 'warga' | 'petugas' | 'lurah' | 'rt_rw' | 'super_admin';
 
 export interface User {
 	id: string;
@@ -45,7 +45,7 @@ export interface RequestHistory {
 	explanation: string;
 	actorId: string;
 	actorName: string;
-	actorRole: Role | 'system';
+	actorRole: Role | 'system' | 'citizen' | 'admin';
 	timestamp: string;
 }
 
@@ -77,6 +77,7 @@ export interface DocumentProcedure {
 	commonPitfalls: string[];
 	sourceReference: string;
 	lastVerifiedAt: string;
+	approvalRoles?: Role[];
 }
 
 export const STATUS_META: Record<
@@ -84,62 +85,62 @@ export const STATUS_META: Record<
 	{ label: string; color: string; bg: string; dot: string; description: string }
 > = {
 	draft: {
-		label: 'Draft',
+		label: 'Draf',
 		color: '#647587',
 		bg: '#E7ECEF',
 		dot: '#647587',
-		description: 'Not yet submitted. Only visible to you.'
+		description: 'Belum diajukan dan hanya dapat dilihat oleh kamu.'
 	},
 	submitted: {
-		label: 'Submitted',
+		label: 'Diajukan',
 		color: '#274C77',
 		bg: '#E7ECEF',
 		dot: '#274C77',
-		description: 'Received by the front office. Awaiting verification.'
+		description: 'Sudah diterima petugas dan menunggu verifikasi.'
 	},
 	under_review: {
-		label: 'Under Review',
+		label: 'Sedang diproses',
 		color: '#274C77',
 		bg: '#D8E8F5',
 		dot: '#6096BA',
-		description: 'Being checked by the responsible department.'
+		description: 'Sedang diperiksa oleh petugas yang bertanggung jawab.'
 	},
 	action_required: {
-		label: 'Action Required',
+		label: 'Perlu perbaikan',
 		color: '#7A5A1F',
 		bg: '#F7EBCF',
 		dot: '#B78032',
-		description: 'We need something from you to continue.'
+		description: 'Ada informasi atau berkas yang perlu dilengkapi.'
 	},
 	approved: {
-		label: 'Approved',
+		label: 'Disetujui',
 		color: '#2E6B57',
 		bg: '#D9EBE3',
 		dot: '#39856A',
-		description: 'Approved. Final issuance is being prepared.'
+		description: 'Disetujui. Dokumen sedang disiapkan.'
 	},
 	completed: {
-		label: 'Completed',
+		label: 'Selesai',
 		color: '#2E6B57',
 		bg: '#D9EBE3',
 		dot: '#39856A',
-		description: 'Finished. Document ready for collection or download.'
+		description: 'Selesai dan siap diambil atau diunduh.'
 	},
 	rejected: {
-		label: 'Returned',
+		label: 'Dikembalikan',
 		color: '#8E4444',
 		bg: '#F3DEDE',
 		dot: '#B85C5C',
-		description: 'Returned with an explanation. You may re-apply.'
+		description: 'Dikembalikan dengan catatan perbaikan.'
 	}
 };
 
 export const PIPELINE_STAGES = [
-	{ key: 'received', label: 'Received', hint: 'Front office intake' },
-	{ key: 'verification', label: 'Verification', hint: 'Files & identity check' },
-	{ key: 'review', label: 'Department review', hint: 'Responsible unit' },
-	{ key: 'decision', label: 'Decision', hint: 'Approval & signing' },
-	{ key: 'issuance', label: 'Issuance', hint: 'Ready for pickup' }
+	{ key: 'received', label: 'Diterima', hint: 'Penerimaan oleh petugas' },
+	{ key: 'verification', label: 'Verifikasi', hint: 'Pemeriksaan berkas dan identitas' },
+	{ key: 'review', label: 'Pemeriksaan', hint: 'Unit yang bertanggung jawab' },
+	{ key: 'decision', label: 'Keputusan', hint: 'Persetujuan dan tanda tangan' },
+	{ key: 'issuance', label: 'Penerbitan', hint: 'Siap diambil' }
 ] as const;
 
 export function statusToStageIndex(status: RequestStatus): number {

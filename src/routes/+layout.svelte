@@ -8,8 +8,8 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>CivicFlow — Every document. Every step. Clear progress.</title>
-	<meta name="description" content="Track administrative requests with clarity." />
+	<title>Kelar.in — Setiap pengajuan, setiap tahap, jelas.</title>
+	<meta name="description" content="Lacak pengajuan layanan kelurahan dengan transparan." />
 </svelte:head>
 
 {@render children()}

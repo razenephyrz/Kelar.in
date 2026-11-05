@@ -76,7 +76,7 @@ export const civic = {
 	get myRequests() {
 		const u = this.user;
 		return requests
-			.filter((r) => u?.role === 'admin' || r.ownerId === u?.id)
+			.filter((r) => u?.role !== 'warga' || r.ownerId === u?.id)
 			.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
 	},
 	get myNotifications() {
@@ -103,7 +103,7 @@ export const civic = {
 			name: input.name.trim(),
 			email: input.email.trim(),
 			passwordHash: mockHash(input.password),
-			role: 'citizen',
+			role: 'warga',
 			createdAt: new Date().toISOString(),
 			avatarColor: '#274C77'
 		};
@@ -232,7 +232,7 @@ export const civic = {
 	deleteRequest(id: string) {
 		const item = requests.find((r) => r.id === id);
 		const actor = this.user;
-		if (!item || !actor || (actor.role !== 'admin' && item.ownerId !== actor.id)) return false;
+		if (!item || !actor || (actor.role === 'warga' && item.ownerId !== actor.id)) return false;
 		if (item.status === 'approved' || item.status === 'completed') return false;
 		requests = requests.filter((request) => request.id !== id);
 		history = history.filter((entry) => entry.requestId !== id);

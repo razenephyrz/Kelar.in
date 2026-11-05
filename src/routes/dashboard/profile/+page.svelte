@@ -4,14 +4,14 @@
 
 <header class="app-header">
 	<div>
-		<p class="eyebrow">Account</p>
-		<h1>Your profile</h1>
-		<p class="muted">Demo account details and session controls.</p>
+		<p class="eyebrow">Akun</p>
+		<h1>Profil kamu</h1>
+		<p class="muted">Informasi akun demo dan pengaturan sesi.</p>
 	</div>
 </header>
 <section class="surface stack">
 	<div>
-		<p class="eyebrow">Name</p>
+		<p class="eyebrow">Nama</p>
 		<h2 class="section-title">{civic.user?.name}</h2>
 	</div>
 	<div>
@@ -19,8 +19,8 @@
 		<p>{civic.user?.email}</p>
 	</div>
 	<div>
-		<p class="eyebrow">Role</p>
+		<p class="eyebrow">Peran</p>
 		<p>{civic.user?.role}</p>
 	</div>
-	<button class="link-button" onclick={() => civic.resetDemo()}>Reset demo data</button>
+	<button class="link-button" onclick={() => civic.resetDemo()}>Reset data demo</button>
 </section>

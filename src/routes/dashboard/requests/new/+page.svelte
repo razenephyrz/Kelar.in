@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { civic } from '#lib/store';
 	let title = $state('');
-	let type = $state('Certificate of Residence');
+	let type = $state('Surat Domisili');
 	let description = $state('');
 	let error = $state('');
 	function submit(event: SubmitEvent) {
@@ -16,7 +16,7 @@
 			title,
 			description,
 			metadata: {},
-			assignedDepartment: 'Civil Registry — Residency Unit',
+			assignedDepartment: 'Petugas Kelurahan',
 			targetDays: 7
 		});
 		if (!request) {
@@ -29,24 +29,23 @@
 
 <header class="app-header">
 	<div>
-		<p class="eyebrow">New file</p>
-		<h1>Start a request</h1>
-		<p class="muted">Give the front office enough context to route it correctly.</p>
+		<p class="eyebrow">Pengajuan baru</p>
+		<h1>Buat pengajuan</h1>
+		<p class="muted">Lengkapi informasi agar petugas dapat memproses layanan dengan tepat.</p>
 	</div>
 </header>
 <form class="surface form" onsubmit={submit}>
 	<label class="field"
-		>Document type<select bind:value={type}
-			><option>Certificate of Residence</option><option>Family Card Update</option><option
-				>Birth Certificate Application</option
-			><option>Business Registration Inquiry</option></select
+		>Jenis layanan<select bind:value={type}
+			><option>Surat Domisili</option><option>KTP</option><option>Akta Kematian</option><option
+				>Slip Gaji</option><option>Surat Keterangan Belum Menikah</option></select
 		></label
 	><label class="field"
-		>Request title<input bind:value={title} placeholder="What do you need?" required /></label
+		>Judul pengajuan<input bind:value={title} placeholder="Layanan yang dibutuhkan" required /></label
 	><label class="field"
-		>Description<textarea bind:value={description} rows="5" placeholder="Add any useful context"
+		>Keterangan<textarea bind:value={description} rows="5" placeholder="Tambahkan keterangan jika diperlukan"
 		></textarea></label
 	>{#if error}<p class="error">{error}</p>{/if}<button class="link-button" type="submit"
-		>Submit request →</button
+		>Ajukan sekarang →</button
 	>
 </form>

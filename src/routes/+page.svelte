@@ -1,24 +1,24 @@
 <main class="landing">
 	<nav class="topbar">
-		<a class="brand" href="/"><span class="brand-mark">C</span><span>CivicFlow</span></a>
+		<a class="brand" href="/"><span class="brand-mark">K</span><span>Kelar.in</span></a>
 		<div class="nav-links">
 			<a href="/about">About</a><a href="/help">Help centre</a><a class="nav-action" href="/login"
-				>Sign in</a
+				>Masuk</a
 			>
 		</div>
 	</nav>
 	<section class="hero">
 		<div class="hero-copy">
-			<p class="eyebrow">Public administration, made legible</p>
-			<h1>Every document.<br />Every step. <em>Clear progress.</em></h1>
+			<p class="eyebrow">Layanan kelurahan yang transparan</p>
+			<h1>Setiap berkas.<br />Setiap tahap. <em>Jelas progresnya.</em></h1>
 			<p class="hero-lead">
-				CivicFlow gives citizens one calm place to file requests, understand the process, and know
-				what happens next.
+				Kelar.in membantu warga mengajukan layanan, memahami proses, dan mengetahui tahapan
+				berikutnya dalam satu tempat.
 			</p>
 			<div class="hero-actions">
-				<a class="button primary" href="/register">Create a free account <span>→</span></a><a
+				<a class="button primary" href="/register">Buat akun <span>→</span></a><a
 					class="text-link"
-					href="/login">Try the demo <span>↗</span></a
+					href="/login">Coba demo <span>↗</span></a
 				>
 			</div>
 			<div class="trust-row">

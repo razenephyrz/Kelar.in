@@ -17,28 +17,29 @@
 <div class="app-shell">
 	<aside class="sidebar">
 		<div class="sidebar-brand-wrap">
-			<a class="brand" href="/"><span class="brand-mark">C</span><span>CivicFlow</span></a>
-			<p>Public administration tracking</p>
+			<a class="brand" href="/"><span class="brand-mark">K</span><span>Kelar.in</span></a>
+			<p>Pelacakan layanan kelurahan</p>
 		</div>
-		<a class="sidebar-new-request" href="/dashboard/requests/new"><span>+</span> New request</a>
-		<nav aria-label="Dashboard">
-			<a class:nav-active={page.url.pathname === '/dashboard'} href="/dashboard"><span class="nav-glyph">▦</span>Overview</a>
-			<a class:nav-active={page.url.pathname.startsWith('/dashboard/requests')} href="/dashboard/requests"><span class="nav-glyph">▤</span>My Requests</a>
-			<a class:nav-active={page.url.pathname.startsWith('/dashboard/documents')} href="/dashboard/documents"><span class="nav-glyph">▥</span>Document Guide</a>
-			<a class:nav-active={page.url.pathname.startsWith('/dashboard/inbox')} href="/dashboard/inbox"><span class="nav-glyph">⌂</span>Inbox {#if civic.unreadCount}<span class="nav-count">{civic.unreadCount}</span>{/if}</a>
-			<a class:nav-active={page.url.pathname.startsWith('/dashboard/profile')} href="/dashboard/profile"><span class="nav-glyph">⌘</span>Profile</a>
-			{#if civic.user?.role === 'admin'}<a class:nav-active={page.url.pathname.startsWith('/admin')} href="/admin"><span class="nav-glyph">≡</span>Administration</a>{/if}
+		{#if civic.user?.role === 'warga'}<a class="sidebar-new-request" href="/dashboard/requests/new"><span>+</span> Pengajuan baru</a>{/if}
+		<nav aria-label="Dasbor">
+			<a class:nav-active={page.url.pathname === '/dashboard'} href="/dashboard"><span class="nav-glyph">▦</span>Ringkasan</a>
+			<a class:nav-active={page.url.pathname.startsWith('/dashboard/requests')} href="/dashboard/requests"><span class="nav-glyph">▤</span>{civic.user?.role === 'warga' ? 'Pengajuan Saya' : 'Antrean Pengajuan'}</a>
+			<a class:nav-active={page.url.pathname.startsWith('/dashboard/documents')} href="/dashboard/documents"><span class="nav-glyph">▥</span>Panduan Layanan</a>
+			<a class:nav-active={page.url.pathname.startsWith('/dashboard/inbox')} href="/dashboard/inbox"><span class="nav-glyph">⌂</span>Kotak Masuk {#if civic.unreadCount}<span class="nav-count">{civic.unreadCount}</span>{/if}</a>
+			<a class:nav-active={page.url.pathname.startsWith('/dashboard/transparansi')} href="/dashboard/transparansi"><span class="nav-glyph">◌</span>Transparansi</a>
+			<a class:nav-active={page.url.pathname.startsWith('/dashboard/profile')} href="/dashboard/profile"><span class="nav-glyph">⌘</span>Profil</a>
+			{#if civic.user?.role !== 'warga'}<a class:nav-active={page.url.pathname.startsWith('/admin')} href="/admin"><span class="nav-glyph">≡</span>Operasional</a>{/if}
 		</nav>
 		<div class="sidebar-account">
 			<div class="avatar">{civic.user?.name.slice(0, 1)}</div>
-			<div><strong>{civic.user?.name}</strong><small>{civic.user?.role === 'admin' ? 'Administrator' : 'Citizen'} · Demo Session</small></div>
+			<div><strong>{civic.user?.name}</strong><small>{civic.user?.role?.replace('_', ' ')} · Sesi Demo</small></div>
 			<button class="logout" aria-label="Sign out" onclick={() => { civic.logout(); goto('/'); }}>↪</button>
 		</div>
 	</aside>
 	<main class="app-main">
 		<header class="dashboard-topbar">
 			<form class="dashboard-search" onsubmit={submitSearch} role="search">
-				<span aria-hidden="true">⌕</span><input bind:value={search} placeholder="Search by request ID or title..." aria-label="Search requests" />
+				<span aria-hidden="true">⌕</span><input bind:value={search} placeholder="Cari ID atau judul pengajuan..." aria-label="Cari pengajuan" />
 			</form>
 			<div class="topbar-actions">
 				<a class="notification-button" href="/dashboard/inbox" aria-label="Open inbox">♧{#if civic.unreadCount}<b>{civic.unreadCount}</b>{/if}</a>

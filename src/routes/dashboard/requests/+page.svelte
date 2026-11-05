@@ -35,27 +35,27 @@
 
 <header class="app-header">
 	<div>
-		<p class="eyebrow">Your files</p>
-		<h1>My requests</h1>
-		<p class="muted">A complete history of what you filed and what happens next.</p>
+		<p class="eyebrow">Berkas kamu</p>
+		<h1>Pengajuan saya</h1>
+		<p class="muted">Riwayat pengajuan dan tahapan prosesnya.</p>
 	</div>
-	<a class="link-button" href="/dashboard/requests/new">+ New request</a>
+	<a class="link-button" href="/dashboard/requests/new">+ Pengajuan baru</a>
 </header>
 <section class="surface">
 	<div class="request-filters">
-		<label class="field">Search<input bind:value={query} placeholder="Search ID or title" /></label>
+		<label class="field">Cari<input bind:value={query} placeholder="Cari ID atau judul" /></label>
 		<label class="field"
 			>Status<select bind:value={status}
-				><option value="all">All statuses</option>{#each Object.keys(STATUS_META) as value}<option
+				><option value="all">Semua status</option>{#each Object.keys(STATUS_META) as value}<option
 						{value}>{STATUS_META[value as RequestStatus].label}</option
 					>{/each}</select
 			></label
 		>
 		<label class="field"
 			>Sort<select bind:value={sort}
-				><option value="updated">Last updated</option><option value="submitted"
-					>Submission date</option
-				><option value="target">Target date</option></select
+				><option value="updated">Pembaruan terakhir</option><option value="submitted"
+					>Tanggal pengajuan</option
+				><option value="target">Tanggal target</option></select
 			></label
 		>
 	</div>
@@ -68,7 +68,7 @@
 						>
 						<small
 							>{formatDate(request.updatedAt)}{isOverdue(request.targetCompletionAt, request.status)
-								? ' · Past sample target'
+								? ' · Melewati estimasi'
 								: ''}</small
 						>
 					</div>
@@ -77,8 +77,8 @@
 				{#if ['draft', 'submitted', 'action_required'].includes(request.status)}<button
 						class="delete-button"
 						onclick={() => civic.deleteRequest(request.id)}
-						aria-label={`Delete ${request.id}`}>Delete</button
+						aria-label={`Hapus ${request.id}`}>Hapus</button
 					>{/if}
-			</div>{:else}<p class="muted">No requests match these filters.</p>{/each}
+			</div>{:else}<p class="muted">Tidak ada pengajuan yang sesuai filter.</p>{/each}
 	</div>
 </section>

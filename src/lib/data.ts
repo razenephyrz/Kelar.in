@@ -28,9 +28,9 @@ export function seedUsers(): User[] {
 		{
 			id: 'u_citizen',
 			name: 'Amara Osei',
-			email: 'citizen@example.com',
+			email: 'warga@example.com',
 			passwordHash: mockHash(DEMO_PASSWORD),
-			role: 'citizen',
+			role: 'warga',
 			createdAt: iso(320),
 			avatarColor: '#274C77'
 		},
@@ -39,7 +39,7 @@ export function seedUsers(): User[] {
 			name: 'Daniel Reyes',
 			email: 'admin@example.com',
 			passwordHash: mockHash(DEMO_PASSWORD),
-			role: 'admin',
+			role: 'super_admin',
 			createdAt: iso(400),
 			avatarColor: '#6096BA'
 		},
@@ -48,9 +48,27 @@ export function seedUsers(): User[] {
 			name: 'Maya Lindqvist',
 			email: 'maya@example.com',
 			passwordHash: mockHash(DEMO_PASSWORD),
-			role: 'citizen',
+			role: 'petugas',
 			createdAt: iso(200),
 			avatarColor: '#39856A'
+		},
+		{
+			id: 'u_lurah',
+			name: 'Siti Rahmawati',
+			email: 'lurah@example.com',
+			passwordHash: mockHash(DEMO_PASSWORD),
+			role: 'lurah',
+			createdAt: iso(180),
+			avatarColor: '#B78032'
+		},
+		{
+			id: 'u_rtrw',
+			name: 'Budi Santoso',
+			email: 'rtrw@example.com',
+			passwordHash: mockHash(DEMO_PASSWORD),
+			role: 'rt_rw',
+			createdAt: iso(160),
+			avatarColor: '#6096BA'
 		}
 	];
 }
@@ -59,8 +77,8 @@ export function seedProcedures(): DocumentProcedure[] {
 	return [
 		{
 			id: 'proc_residence',
-			name: 'Certificate of Residence',
-			category: 'Residency',
+			name: 'Surat Domisili',
+			category: 'Administrasi Kependudukan',
 			description:
 				"Illustrative mock entry. Confirms a citizen's registered address for administrative use such as schooling, banking, or local registration.",
 			eligibility: [
@@ -109,8 +127,8 @@ export function seedProcedures(): DocumentProcedure[] {
 		},
 		{
 			id: 'proc_family',
-			name: 'Family Card Update',
-			category: 'Family',
+			name: 'Surat Keterangan Belum Menikah',
+			category: 'Administrasi Kependudukan',
 			description:
 				'Illustrative mock entry. Updates household composition after birth, marriage, relocation, or other family changes.',
 			eligibility: [
@@ -159,8 +177,8 @@ export function seedProcedures(): DocumentProcedure[] {
 		},
 		{
 			id: 'proc_birth',
-			name: 'Birth Certificate Application',
-			category: 'Civil Status',
+			name: 'Akta Kematian',
+			category: 'Pencatatan Sipil',
 			description:
 				'Illustrative mock entry. First-time registration of a birth and issuance of the official certificate.',
 			eligibility: [
@@ -209,8 +227,8 @@ export function seedProcedures(): DocumentProcedure[] {
 		},
 		{
 			id: 'proc_business',
-			name: 'Business Registration Inquiry',
-			category: 'Business',
+			name: 'Slip Gaji',
+			category: 'Administrasi Umum',
 			description:
 				'Illustrative mock entry. Pre-check and filing for a small business operating permit, including name availability.',
 			eligibility: [
@@ -259,8 +277,8 @@ export function seedProcedures(): DocumentProcedure[] {
 		},
 		{
 			id: 'proc_idcard',
-			name: 'National ID Renewal',
-			category: 'Identity',
+			name: 'KTP',
+			category: 'Administrasi Kependudukan',
 			description:
 				'Illustrative mock entry. Renewal of an expired or damaged identity card with biometric confirmation.',
 			eligibility: [
@@ -315,7 +333,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-481201',
 			ownerId: 'u_citizen',
-			documentType: 'Certificate of Residence',
+			documentType: 'Surat Domisili',
 			title: 'Residence certificate for school enrollment',
 			description:
 				"Needed for my daughter's primary school enrollment file. Address: 14 Harbor Lane, Apt 4B.",
@@ -330,7 +348,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-377450',
 			ownerId: 'u_citizen',
-			documentType: 'Family Card Update',
+			documentType: 'Surat Keterangan Belum Menikah',
 			title: 'Add newborn to family card',
 			description: 'Our son was born on March 12. Attestation letter attached at submission.',
 			status: 'action_required',
@@ -349,7 +367,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-902311',
 			ownerId: 'u_citizen',
-			documentType: 'Birth Certificate Application',
+			documentType: 'Akta Kematian',
 			title: 'Birth certificate — Elio Osei',
 			description: 'First-time birth certificate request with clinic attestation.',
 			status: 'submitted',
@@ -363,7 +381,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-118822',
 			ownerId: 'u_citizen',
-			documentType: 'National ID Renewal',
+			documentType: 'KTP',
 			title: 'ID renewal after expiry',
 			description: 'Previous card expired in January. Requesting renewal with same address.',
 			status: 'completed',
@@ -377,7 +395,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-550193',
 			ownerId: 'u_citizen',
-			documentType: 'Business Registration Inquiry',
+			documentType: 'Slip Gaji',
 			title: 'Neighborhood bakery — name pre-check',
 			description:
 				'Proposed names: Harbor Crumb, Crumb & Tide, Morning Ferment. Premises at 8 Market Row.',
@@ -392,7 +410,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-663021',
 			ownerId: 'u_citizen',
-			documentType: 'Certificate of Residence',
+			documentType: 'Surat Domisili',
 			title: 'Residence certificate — bank file (draft)',
 			description: 'Draft for upcoming mortgage file. Not submitted yet.',
 			status: 'draft',
@@ -406,7 +424,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-204518',
 			ownerId: 'u_maya',
-			documentType: 'Family Card Update',
+			documentType: 'Surat Keterangan Belum Menikah',
 			title: 'Family card — address move',
 			description: 'Moved from North Pier to Elm District. Move letter attached.',
 			status: 'under_review',
@@ -422,7 +440,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-771290',
 			ownerId: 'u_maya',
-			documentType: 'Business Registration Inquiry',
+			documentType: 'Slip Gaji',
 			title: 'Tailoring studio permit',
 			description: 'Home-based tailoring studio, low-impact activity.',
 			status: 'completed',
@@ -436,7 +454,7 @@ export function seedRequests(): AdministrativeRequest[] {
 		{
 			id: 'CF-2026-310077',
 			ownerId: 'u_maya',
-			documentType: 'Birth Certificate Application',
+			documentType: 'Akta Kematian',
 			title: 'Late birth registration — correction',
 			description: 'Name correction requested after initial filing.',
 			status: 'rejected',
