@@ -1,54 +1,104 @@
-# sv
+# Kelar.in
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**Kelar.in** adalah aplikasi web *public service tracking* untuk melacak berkas pelayanan kelurahan secara transparan dan pasti. Warga dapat memantau status pengajuan berkasnya dari awal hingga selesai, tanpa perlu bolak-balik ke kantor kelurahan untuk bertanya.
 
-## Creating a project
+> Karya untuk **MIA 2026** — tahap *First Draft Submission* (01 November 2026).
 
-If you're seeing this, you've probably already done this step. Congrats!
+---
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Tech Stack
 
-To recreate this project with the same configuration:
+| Kebutuhan | Teknologi |
+| --- | --- |
+| Framework | [SvelteKit](https://svelte.dev/docs/kit) (Svelte + TypeScript) |
+| Build tool | Vite |
+| Styling | Tailwind CSS (plugin `typography` & `forms`) |
+| Database | MySQL (driver `mysql2`) |
+| ORM | Drizzle ORM (`drizzle-kit` untuk skema/migrasi) |
+| Autentikasi | Better Auth |
+| Testing | Vitest |
+| Kualitas kode | ESLint + Prettier |
+| Deployment | Netlify (`@sveltejs/adapter-netlify`) |
 
-```sh
-# recreate this project
-npx sv@1.1.1 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" tailwindcss="plugins:typography,forms" sveltekit-adapter="adapter:netlify" drizzle="database:mysql+mysql:mysql2+docker:no" better-auth="demo:password" --install npm .
-```
+---
 
-## Adding features
+## Cara Menjalankan
 
-Add features to your project with `sv add`:
+### Prasyarat
 
-```sh
-npx sv add
-```
+- [Node.js](https://nodejs.org/) (disarankan versi LTS terbaru) dan npm
+- Server MySQL yang sudah berjalan (lokal atau remote)
+- Git
 
-For example, to add Tailwind CSS:
+### Langkah
 
-```sh
-npx sv add tailwindcss
-```
+```bash
+# 1. Clone repository
+git clone https://github.com/razenephyrz/Kelar.in.git
+cd Kelar.in
 
-## Developing
+# 2. Install dependency
+npm install
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+# 3. Siapkan environment variable
+cp .env.example .env
+#    lalu isi nilai di .env (koneksi database, secret auth, dll.)
 
-```sh
+# 4. Siapkan skema database
+npm run db:push
+
+# 5. Jalankan development server
 npm run dev
-
-# or start the server and open the app in a new browser tab
+#    atau langsung buka di browser:
 npm run dev -- --open
 ```
 
-## Building
+Aplikasi berjalan di `http://localhost:5173` (default Vite).
 
-To create a production version of your app:
+### Perintah lain
 
-```sh
-npm run build
+```bash
+npm run build      # build versi production
+npm run preview    # preview hasil build
+npm run lint       # cek ESLint & Prettier
+npm run test       # jalankan unit test (Vitest)
 ```
 
-You can preview the production build with `npm run preview`.
+---
+
+## Progress Saat Ini
+
+**Status: First Draft (pra-penyisihan)**
+
+- [x] Inisialisasi project SvelteKit + TypeScript
+- [x] Setup Tailwind CSS, ESLint, Prettier, Vitest
+- [x] Setup Drizzle ORM + MySQL dan konfigurasi Better Auth
+- [x] Konfigurasi deployment Netlify
+- [x] Landing page
+- [ ] Halaman login / registrasi
+- [ ] Form pengajuan berkas layanan
+- [ ] Halaman pelacakan status berkas (timeline status)
+- [ ] Dashboard petugas kelurahan untuk memperbarui status berkas
+- [ ] Notifikasi perubahan status
+
+---
+
+## Struktur Project
+
+```
+Kelar.in/
+├── src/              # Kode aplikasi (routes, komponen, logic server)
+├── static/           # Aset statis
+├── drizzle.config.ts # Konfigurasi Drizzle ORM
+├── vite.config.ts    # Konfigurasi Vite
+├── .env.example      # Contoh environment variable
+└── package.json
+```
+
+---
+
+## Tim
+
+- [Katanya Faiz Kumpul di FC](https://github.com/razenephyrz)
+
+<!-- Tambahkan nama anggota tim lainnya di sini -->
