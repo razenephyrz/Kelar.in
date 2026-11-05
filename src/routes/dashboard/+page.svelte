@@ -1,47 +1,38 @@
 <script lang="ts">
 	import { civic } from '#lib/store';
+	import { formatDate } from '../../lib/utils';
+
+	const total = $derived(civic.myRequests.length);
+	const inProgress = $derived(civic.myRequests.filter((request) => ['submitted', 'under_review'].includes(request.status)).length);
+	const actionRequired = $derived(civic.myRequests.filter((request) => request.status === 'action_required').length);
+	const done = $derived(civic.myRequests.filter((request) => ['approved', 'completed'].includes(request.status)).length);
+	const today = new Date();
 </script>
 
 <svelte:head><title>Overview — CivicFlow</title></svelte:head>
-<header class="app-header">
-	<div>
-		<p class="eyebrow">Your workspace</p>
-		<h1>{civic.user ? `Good day, ${civic.user.name.split(' ')[0]}.` : 'Overview'}</h1>
-		<p class="muted">Every request has a place, a status, and a next step.</p>
+<section class="overview-hero" aria-labelledby="overview-title">
+	<div class="overview-copy">
+		<p class="overview-date">{today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+		<h1 id="overview-title">Good afternoon,<br />{civic.user?.name.split(' ')[0]}.</h1>
+		<p class="overview-summary">You have {total} requests · {inProgress} in progress · {actionRequired} needs your attention.</p>
+		<div class="overview-actions">
+			<a class="hero-new-request" href="/dashboard/requests/new"><span>+</span> New<br />request</a>
+			<a class="hero-view-all" href="/dashboard/requests">View<br />all <span>→</span></a>
+		</div>
 	</div>
-	<a class="link-button" href="/dashboard/requests/new">+ New request</a>
-</header>
-<div class="metrics">
-	<div class="metric"><b>{civic.myRequests.length}</b><span>Total requests</span></div>
-	<div class="metric">
-		<b>{civic.myRequests.filter((r) => ['submitted', 'under_review'].includes(r.status)).length}</b
-		><span>In progress</span>
+	<div class="overview-metrics" aria-label="Request summary">
+		<div><b>{total}</b><span>Total</span></div>
+		<div><b>{inProgress}</b><span>In progress</span></div>
+		<div><b>{actionRequired}</b><span>Action</span></div>
+		<div><b>{done}</b><span>Done</span></div>
 	</div>
-	<div class="metric">
-		<b>{civic.myRequests.filter((r) => r.status === 'action_required').length}</b><span
-			>Need your action</span
-		>
-	</div>
-	<div class="metric">
-		<b>{civic.myRequests.filter((r) => ['approved', 'completed'].includes(r.status)).length}</b
-		><span>Completed</span>
-	</div>
-</div>
-<section class="surface">
-	<div class="app-header" style="margin-bottom:10px">
-		<h2 class="section-title">Recent requests</h2>
-		<a class="text-link" href="/dashboard/requests">View all →</a>
-	</div>
-	<div class="request-list">
-		{#each civic.myRequests.slice(0, 5) as request}<a
-				class="request-row"
-				href={`/dashboard/requests/${request.id}`}
-				><div>
-					<strong>{request.title}</strong><small>{request.id} · {request.documentType}</small>
-				</div>
-				<span class={`pill ${request.status}`}>{request.status.replace('_', ' ')}</span></a
-			>{:else}<p class="muted">
-				No requests yet. Create your first request to start tracking progress.
-			</p>{/each}
+</section>
+
+<section class="overview-lower">
+	<div class="overview-section-heading"><div><p class="eyebrow">Keep moving</p><h2 class="section-title">Recent requests</h2></div><a class="text-link" href="/dashboard/requests">View all →</a></div>
+	<div class="overview-request-list">
+		{#each civic.myRequests.slice(0, 4) as request}
+			<a class="overview-request" href={`/dashboard/requests/${request.id}`}><span class="request-mark">{request.title.slice(0, 1)}</span><span class="overview-request-copy"><strong>{request.title}</strong><small>{request.id} · Updated {formatDate(request.updatedAt)}</small></span><span class={`pill ${request.status}`}>{request.status.replace('_', ' ')}</span><span class="overview-arrow">→</span></a>
+		{:else}<p class="muted">No requests yet. Create your first request to start tracking progress.</p>{/each}
 	</div>
 </section>
