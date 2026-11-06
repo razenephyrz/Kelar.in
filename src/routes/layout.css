@@ -879,6 +879,62 @@ h1 em {
 .form-card {
 	width: min(100%, 430px);
 }
+.register-card {
+	width: min(100%, 520px);
+}
+.auth-tabs {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 5px;
+	margin-top: 20px;
+	padding: 4px;
+	background: var(--pale);
+}
+.auth-tabs button {
+	border: 0;
+	padding: 11px;
+	background: transparent;
+	color: var(--muted);
+	cursor: pointer;
+	font-weight: 600;
+}
+.auth-tabs button.active {
+	background: #fff;
+	color: var(--navy);
+	box-shadow: 0 1px 4px #274c7718;
+}
+.hint {
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 400;
+}
+.split-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+.consent {
+	display: flex;
+	align-items: flex-start;
+	gap: 9px;
+	color: var(--muted);
+	font-size: 11px;
+	line-height: 1.5;
+}
+.consent input {
+	margin-top: 2px;
+	accent-color: var(--navy);
+}
+.email-check {
+	display: grid;
+	gap: 18px;
+	text-align: center;
+}
+.email-check .brand-mark {
+	margin: 0 auto;
+	background: var(--pale);
+	color: var(--navy);
+}
 .form-card h1 {
 	font-size: 42px;
 	margin: 0 0 8px;
@@ -922,6 +978,36 @@ h1 em {
 	color: #8e4444;
 	padding: 10px;
 	font-size: 12px;
+}
+.success {
+	background: #e2f1e9;
+	color: #286047;
+	padding: 10px;
+	font-size: 12px;
+}
+.approval-list {
+	display: grid;
+	gap: 12px;
+}
+.approval-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px;
+	border: 1px solid var(--line);
+}
+.approval-item p {
+	margin: 5px 0 0;
+}
+.approval-actions {
+	display: flex;
+	gap: 8px;
+}
+.button.secondary {
+	border: 1px solid var(--line);
+	background: #fff;
+	color: var(--navy);
 }
 .demo-box {
 	background: var(--pale);
