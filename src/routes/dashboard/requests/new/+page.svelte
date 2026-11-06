@@ -1,29 +1,40 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { civic } from '#lib/store';
+	import { onMount } from 'svelte';
 	let title = $state('');
-	let type = $state('Surat Domisili');
+	let type = $state('');
 	let description = $state('');
 	let error = $state('');
-	function submit(event: SubmitEvent) {
+	type Service = { id: string; name: string; processingDays: number; processingTarget: string; description: string };
+	let services = $state<Service[]>([]);
+	let selected = $derived(services.find((service) => service.id === type));
+	onMount(async () => {
+		const response = await fetch('/api/warga/services');
+		if (!response.ok) {
+			error = 'Daftar layanan belum dapat dimuat. Pastikan koneksi server tersedia.';
+			return;
+		}
+		services = await response.json();
+		type = services[0]?.id ?? '';
+	});
+	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!title.trim()) {
-			error = 'Add a short title for your request.';
+			error = 'Masukkan judul singkat untuk pengajuan.';
 			return;
 		}
-		const request = civic.createRequest({
-			documentType: type,
-			title,
-			description,
-			metadata: {},
-			assignedDepartment: 'Petugas Kelurahan',
-			targetDays: 7
+		const response = await fetch('/api/warga/requests', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ serviceId: type, title, description })
 		});
-		if (!request) {
-			error = 'Your session has expired. Please sign in again.';
+		if (!response.ok) {
+			const result = await response.json().catch(() => null);
+			error = result?.message ?? 'Pengajuan belum dapat disimpan.';
 			return;
 		}
-		goto(`/dashboard/requests/${request.id}`);
+		const result = await response.json();
+		goto(`/dashboard/requests/${result.id}`);
 	}
 </script>
 
@@ -36,15 +47,15 @@
 </header>
 <form class="surface form" onsubmit={submit}>
 	<label class="field"
-		>Jenis layanan<select bind:value={type}
-			><option>Surat Domisili</option><option>KTP</option><option>Akta Kematian</option><option
-				>Slip Gaji</option><option>Surat Keterangan Belum Menikah</option></select
+		>Jenis layanan<select bind:value={type} required
+			>{#each services as service}<option value={service.id}>{service.name}</option>{/each}</select
 		></label
 	><label class="field"
 		>Judul pengajuan<input bind:value={title} placeholder="Layanan yang dibutuhkan" required /></label
 	><label class="field"
 		>Keterangan<textarea bind:value={description} rows="5" placeholder="Tambahkan keterangan jika diperlukan"
-		></textarea></label
+		></textarea></label>
+	{#if selected}<div class="surface"><p class="eyebrow">Estimasi dan alur</p><strong>{selected.processingTarget}</strong><p class="muted">{selected.description}</p></div>{/if}
 	>{#if error}<p class="error">{error}</p>{/if}<button class="link-button" type="submit"
 		>Ajukan sekarang →</button
 	>

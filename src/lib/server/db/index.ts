@@ -7,7 +7,7 @@ if (!DATABASE_URL) throw new Error('DATABASE_URL is not set');
 
 const client = mysql.createPool({
 	uri: DATABASE_URL,
-	ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+	ssl: {}
 });
 
 export const db = drizzle(client, { schema, mode: 'default' });

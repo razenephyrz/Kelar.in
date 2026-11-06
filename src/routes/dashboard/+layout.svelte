@@ -4,9 +4,12 @@
 	import { civic } from '#lib/store';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
 	let search = $state('');
-	if (typeof window !== 'undefined' && !civic.user) goto('/login');
+	type DashboardUser = { name: string; role?: string };
+	const currentUser = $derived<DashboardUser | null>(
+		(data?.user as DashboardUser | undefined) ?? civic.user
+	);
 
 	function submitSearch(event: SubmitEvent) {
 		event.preventDefault();
@@ -20,19 +23,19 @@
 			<a class="brand" href="/"><span class="brand-mark">K</span><span>Kelar.in</span></a>
 			<p>Pelacakan layanan kelurahan</p>
 		</div>
-		{#if civic.user?.role === 'warga'}<a class="sidebar-new-request" href="/dashboard/requests/new"><span>+</span> Pengajuan baru</a>{/if}
+		{#if currentUser?.role === 'warga'}<a class="sidebar-new-request" href="/dashboard/requests/new"><span>+</span> Pengajuan baru</a>{/if}
 		<nav aria-label="Dasbor">
 			<a class:nav-active={page.url.pathname === '/dashboard'} href="/dashboard"><span class="nav-glyph">▦</span>Ringkasan</a>
-			<a class:nav-active={page.url.pathname.startsWith('/dashboard/requests')} href="/dashboard/requests"><span class="nav-glyph">▤</span>{civic.user?.role === 'warga' ? 'Pengajuan Saya' : 'Antrean Pengajuan'}</a>
+			<a class:nav-active={page.url.pathname.startsWith('/dashboard/requests')} href="/dashboard/requests"><span class="nav-glyph">▤</span>{currentUser?.role === 'warga' ? 'Pengajuan Saya' : 'Antrean Pengajuan'}</a>
 			<a class:nav-active={page.url.pathname.startsWith('/dashboard/documents')} href="/dashboard/documents"><span class="nav-glyph">▥</span>Panduan Layanan</a>
 			<a class:nav-active={page.url.pathname.startsWith('/dashboard/inbox')} href="/dashboard/inbox"><span class="nav-glyph">⌂</span>Kotak Masuk {#if civic.unreadCount}<span class="nav-count">{civic.unreadCount}</span>{/if}</a>
 			<a class:nav-active={page.url.pathname.startsWith('/dashboard/transparansi')} href="/dashboard/transparansi"><span class="nav-glyph">◌</span>Transparansi</a>
 			<a class:nav-active={page.url.pathname.startsWith('/dashboard/profile')} href="/dashboard/profile"><span class="nav-glyph">⌘</span>Profil</a>
-			{#if civic.user?.role !== 'warga'}<a class:nav-active={page.url.pathname.startsWith('/admin')} href="/admin"><span class="nav-glyph">≡</span>Operasional</a>{/if}
+			{#if currentUser?.role !== 'warga'}<a class:nav-active={page.url.pathname.startsWith('/admin')} href="/admin"><span class="nav-glyph">≡</span>Operasional</a>{/if}
 		</nav>
 		<div class="sidebar-account">
-			<div class="avatar">{civic.user?.name.slice(0, 1)}</div>
-			<div><strong>{civic.user?.name}</strong><small>{civic.user?.role?.replace('_', ' ')} · Sesi Demo</small></div>
+			<div class="avatar">{currentUser?.name.slice(0, 1)}</div>
+			<div><strong>{currentUser?.name}</strong><small>{currentUser?.role?.replace('_', ' ') ?? 'Akun'} · Sesi aktif</small></div>
 			<button class="logout" aria-label="Sign out" onclick={() => { civic.logout(); goto('/'); }}>↪</button>
 		</div>
 	</aside>
@@ -43,7 +46,7 @@
 			</form>
 			<div class="topbar-actions">
 				<a class="notification-button" href="/dashboard/inbox" aria-label="Open inbox">♧{#if civic.unreadCount}<b>{civic.unreadCount}</b>{/if}</a>
-				<a class="profile-chip" href="/dashboard/profile"><span class="avatar avatar-small">{civic.user?.name.slice(0, 1)}</span><span>{civic.user?.name.split(' ')[0]}</span></a>
+				<a class="profile-chip" href="/dashboard/profile"><span class="avatar avatar-small">{currentUser?.name.slice(0, 1)}</span><span>{currentUser?.name.split(' ')[0]}</span></a>
 			</div>
 		</header>
 		{@render children()}

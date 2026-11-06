@@ -1,11 +1,30 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { civic } from '#lib/store';
 	import { formatDate } from '../../lib/utils';
 
-	const total = $derived(civic.myRequests.length);
-	const inProgress = $derived(civic.myRequests.filter((request) => ['submitted', 'under_review'].includes(request.status)).length);
-	const actionRequired = $derived(civic.myRequests.filter((request) => request.status === 'action_required').length);
-	const done = $derived(civic.myRequests.filter((request) => ['approved', 'completed'].includes(request.status)).length);
+	type CitizenRequest = {
+		id: string;
+		title: string;
+		status: string;
+		updatedAt: string | Date;
+	};
+	let citizenRequests = $state<CitizenRequest[]>([]);
+	let citizenError = $state('');
+	onMount(async () => {
+		if (civic.user?.role !== 'warga') return;
+		const response = await fetch('/api/warga/requests');
+		if (!response.ok) {
+			citizenError = 'Data pengajuan belum dapat dimuat. Pastikan koneksi server tersedia.';
+			return;
+		}
+		citizenRequests = await response.json();
+	});
+
+	const total = $derived(citizenRequests.length);
+	const inProgress = $derived(citizenRequests.filter((request) => ['submitted', 'under_review'].includes(request.status)).length);
+	const actionRequired = $derived(citizenRequests.filter((request) => request.status === 'action_required').length);
+	const done = $derived(citizenRequests.filter((request) => ['approved', 'completed'].includes(request.status)).length);
 	const today = new Date();
 </script>
 
@@ -27,11 +46,12 @@
 			<div><b>{actionRequired}</b><span>Perlu tindakan</span></div><div><b>{done}</b><span>Selesai</span></div>
 		</div>
 	</section>
+	{#if citizenError}<p class="error" role="alert">{citizenError}</p>{/if}
 	<section class="overview-lower">
 		<div class="overview-section-heading"><div><p class="eyebrow">Pantau terus</p><h2 class="section-title">Pengajuan terbaru</h2></div><a class="text-link" href="/dashboard/requests">Lihat semua →</a></div>
 		<div class="overview-request-list">
-			{#each civic.myRequests.slice(0, 4) as request}
-				<a class="overview-request" href={`/dashboard/requests/${request.id}`}><span class="request-mark">{request.title.slice(0, 1)}</span><span class="overview-request-copy"><strong>{request.title}</strong><small>{request.id} · Diperbarui {formatDate(request.updatedAt)}</small></span><span class={`pill ${request.status}`}>{request.status.replace('_', ' ')}</span><span class="overview-arrow">→</span></a>
+			{#each citizenRequests.slice(0, 4) as request}
+				<a class="overview-request" href={`/dashboard/requests/${request.id}`}><span class="request-mark">{request.title.slice(0, 1)}</span><span class="overview-request-copy"><strong>{request.title}</strong><small>{request.id} · Diperbarui {formatDate(new Date(request.updatedAt).toISOString())}</small></span><span class={`pill ${request.status}`}>{request.status.replace('_', ' ')}</span><span class="overview-arrow">→</span></a>
 			{:else}<p class="muted">Belum ada pengajuan. Buat pengajuan pertama untuk mulai melacak proses.</p>{/each}
 		</div>
 	</section>

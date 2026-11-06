@@ -13,7 +13,7 @@ export default defineConfig({
 		user: decodeURIComponent(u.username),
 		password: decodeURIComponent(u.password),
 		database: u.pathname.slice(1),
-		ssl: { rejectUnauthorized: true }
+		ssl: {}
 	},
 	verbose: true,
 	strict: true

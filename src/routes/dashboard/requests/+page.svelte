@@ -1,15 +1,35 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { civic } from '#lib/store';
 	import { STATUS_META, type RequestStatus } from '#lib/types';
 	import { formatDate, isOverdue } from '../../../lib/utils';
 
 	let query = $state(page.url.searchParams.get('q') ?? '');
 	let status = $state<'all' | RequestStatus>('all');
 	let sort = $state<'updated' | 'submitted' | 'target'>('updated');
+	let requests = $state<
+		{
+			id: string;
+			title: string;
+			status: RequestStatus;
+			assignedDepartment: string;
+			updatedAt: string | Date;
+			createdAt: string | Date;
+			targetCompletionAt: string | Date;
+		}[]
+	>([]);
+	let error = $state('');
+	onMount(async () => {
+		const response = await fetch('/api/warga/requests');
+		if (!response.ok) {
+			error = 'Pengajuan belum dapat dimuat. Pastikan koneksi server tersedia.';
+			return;
+		}
+		requests = await response.json();
+	});
 	const filteredRequests = $derived.by(() => {
 		const needle = query.trim().toLowerCase();
-		return civic.myRequests
+		return requests
 			.filter((request) => {
 				const matchesQuery =
 					!needle || `${request.id} ${request.title}`.toLowerCase().includes(needle);
@@ -18,16 +38,16 @@
 			.sort((a, b) => {
 				const first =
 					sort === 'target'
-						? a.targetCompletionAt
+						? new Date(a.targetCompletionAt).toISOString()
 						: sort === 'submitted'
-							? a.createdAt
-							: a.updatedAt;
+							? new Date(a.createdAt).toISOString()
+							: new Date(a.updatedAt).toISOString();
 				const second =
 					sort === 'target'
-						? b.targetCompletionAt
+						? new Date(b.targetCompletionAt).toISOString()
 						: sort === 'submitted'
-							? b.createdAt
-							: b.updatedAt;
+							? new Date(b.createdAt).toISOString()
+							: new Date(b.updatedAt).toISOString();
 				return +new Date(second) - +new Date(first);
 			});
 	});
@@ -41,6 +61,7 @@
 	</div>
 	<a class="link-button" href="/dashboard/requests/new">+ Pengajuan baru</a>
 </header>
+{#if error}<p class="error" role="alert">{error}</p>{/if}
 <section class="surface">
 	<div class="request-filters">
 		<label class="field">Cari<input bind:value={query} placeholder="Cari ID atau judul" /></label>
@@ -67,18 +88,13 @@
 							>{request.id} · {request.assignedDepartment}</small
 						>
 						<small
-							>{formatDate(request.updatedAt)}{isOverdue(request.targetCompletionAt, request.status)
+							>{formatDate(new Date(request.updatedAt).toISOString())}{isOverdue(new Date(request.targetCompletionAt).toISOString(), request.status)
 								? ' · Melewati estimasi'
 								: ''}</small
 						>
 					</div>
 					<span class={`pill ${request.status}`}>{STATUS_META[request.status].label}</span>
 				</a>
-				{#if ['draft', 'submitted', 'action_required'].includes(request.status)}<button
-						class="delete-button"
-						onclick={() => civic.deleteRequest(request.id)}
-						aria-label={`Hapus ${request.id}`}>Hapus</button
-					>{/if}
 			</div>{:else}<p class="muted">Tidak ada pengajuan yang sesuai filter.</p>{/each}
 	</div>
 </section>

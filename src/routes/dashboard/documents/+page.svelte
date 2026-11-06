@@ -1,6 +1,25 @@
 <script lang="ts">
-	import { civic } from '#lib/store';
-	let selected = $state(civic.procedures[0]);
+	import { onMount } from 'svelte';
+	type Service = {
+		id: string;
+		name: string;
+		category: string;
+		description: string;
+		processingTarget: string;
+		checklist: { label: string }[];
+	};
+	let services = $state<Service[]>([]);
+	let selected = $state<Service | undefined>();
+	let error = $state('');
+	onMount(async () => {
+		const response = await fetch('/api/warga/services');
+		if (!response.ok) {
+			error = 'Panduan layanan belum dapat dimuat.';
+			return;
+		}
+		services = await response.json();
+		selected = services[0];
+	});
 </script>
 
 <header class="app-header">
@@ -10,9 +29,10 @@
 		<p class="muted">Prosedur, persyaratan, dan kesalahan umum dengan bahasa sederhana.</p>
 	</div>
 </header>
+{#if error}<p class="error" role="alert">{error}</p>{/if}
 <div class="stack">
 	<div class="surface">
-		{#each civic.procedures as procedure}<button
+		{#each services as procedure}<button
 				class="request-row"
 				style="width:100%;text-align:left;background:none;border:0;cursor:pointer"
 				onclick={() => (selected = procedure)}
@@ -30,11 +50,9 @@
 			<p class="muted">{selected.description}</p>
 			<h3>Yang perlu disiapkan</h3>
 			<ul>
-				{#each selected.requiredDocuments as item}<li>{item}</li>{/each}
+				{#each selected.checklist as item}<li>{item.label}</li>{/each}
 			</ul>
-			<h3>Hal yang perlu diperhatikan</h3>
-			<ul>
-				{#each selected.commonPitfalls as item}<li>{item}</li>{/each}
-			</ul>
+			<h3>Alur persetujuan</h3>
+			<p class="muted">Ikuti checklist di atas sebelum mengajukan agar proses tidak tertunda.</p>
 		</article>{/if}
 </div>
