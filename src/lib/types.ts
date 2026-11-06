@@ -1,5 +1,72 @@
 export type Role = 'warga' | 'petugas' | 'lurah' | 'rt_rw' | 'super_admin';
 
+export type Permission =
+	| 'request:create'
+	| 'request:track'
+	| 'request:review'
+	| 'request:approve'
+	| 'request:sign'
+	| 'request:accept'
+	| 'request:update'
+	| 'request:create_offline'
+	| 'content:education'
+	| 'content:transparency'
+	| 'system:manage';
+
+export const ROLE_META: Record<Role, { label: string; description: string }> = {
+	warga: {
+		label: 'User / Warga',
+		description: 'Mengajukan layanan, memantau proses, dan membaca informasi publik.'
+	},
+	rt_rw: {
+		label: 'RT/RW',
+		description: 'Memberi persetujuan dan tanda tangan pada pengajuan wilayah.'
+	},
+	lurah: {
+		label: 'Pak Lurah',
+		description: 'Memberi persetujuan dan tanda tangan akhir.'
+	},
+	petugas: {
+		label: 'Petugas Kelurahan',
+		description: 'Menerima, memverifikasi, dan memperbarui proses pengajuan.'
+	},
+	super_admin: {
+		label: 'Superadmin',
+		description: 'Mengelola akun, role, layanan, dan konfigurasi sistem.'
+	}
+};
+
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+	warga: ['request:create', 'request:track', 'content:education', 'content:transparency'],
+	rt_rw: ['request:approve', 'request:sign', 'request:track'],
+	lurah: ['request:approve', 'request:sign', 'request:track'],
+	petugas: [
+		'request:accept',
+		'request:update',
+		'request:create_offline',
+		'request:track',
+		'content:education',
+		'content:transparency'
+	],
+	super_admin: [
+		'request:create',
+		'request:track',
+		'request:review',
+		'request:approve',
+		'request:sign',
+		'request:accept',
+		'request:update',
+		'request:create_offline',
+		'content:education',
+		'content:transparency',
+		'system:manage'
+	]
+};
+
+export function hasPermission(role: Role | undefined, permission: Permission): boolean {
+	return role ? ROLE_PERMISSIONS[role].includes(permission) : false;
+}
+
 export interface User {
 	id: string;
 	name: string;
@@ -34,6 +101,7 @@ export interface AdministrativeRequest {
 	delayReason?: string;
 	escalationFlag?: boolean;
 	metadata: Record<string, string>;
+	requestedCompletionAt?: string;
 	progressOverride?: number;
 }
 
