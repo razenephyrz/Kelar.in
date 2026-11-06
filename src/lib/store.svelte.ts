@@ -13,8 +13,10 @@ import type {
 	Notification,
 	RequestHistory,
 	RequestStatus,
-	User
+	User,
+	Permission
 } from './types';
+import { hasPermission } from './types';
 
 const keys = {
 	users: 'civicflow/users/v1',
@@ -112,6 +114,33 @@ export const civic = {
 		persist();
 		return { ok: true };
 	},
+	updateProfile(input: { name: string; email: string }) {
+		const user = this.user;
+		const name = input.name.trim();
+		const email = input.email.trim();
+		if (!user || !name || !email) return { ok: false, error: 'Nama dan email wajib diisi.' };
+		if (
+			users.some(
+				(item) => item.id !== user.id && item.email.toLowerCase() === email.toLowerCase()
+			)
+		)
+			return { ok: false, error: 'Email tersebut sudah digunakan akun lain.' };
+		users = users.map((item) => (item.id === user.id ? { ...item, name, email } : item));
+		persist();
+		return { ok: true };
+	},
+	changePassword(currentPassword: string, newPassword: string) {
+		const user = this.user;
+		if (!user || !verifyMock(currentPassword, user.passwordHash))
+			return { ok: false, error: 'Password saat ini tidak sesuai.' };
+		if (newPassword.trim().length < 8)
+			return { ok: false, error: 'Password baru minimal 8 karakter.' };
+		users = users.map((item) =>
+			item.id === user.id ? { ...item, passwordHash: mockHash(newPassword) } : item
+		);
+		persist();
+		return { ok: true };
+	},
 	logout() {
 		setSession(null);
 	},
@@ -121,11 +150,12 @@ export const civic = {
 		description: string;
 		metadata: Record<string, string>;
 		assignedDepartment: string;
-		targetDays: number;
+		targetDays?: number;
 	}) {
 		const now = new Date();
 		const target = new Date(now);
-		target.setDate(target.getDate() + input.targetDays);
+		const targetDays = input.targetDays ?? 7;
+		target.setDate(target.getDate() + targetDays);
 		target.setHours(17, 0, 0, 0);
 		const owner = this.user;
 		if (!owner) return null;
@@ -141,7 +171,9 @@ export const civic = {
 			targetCompletionAt: target.toISOString(),
 			assignedDepartment: input.assignedDepartment,
 			requiredActions: [],
-			metadata: input.metadata
+			metadata: input.metadata,
+			requestedCompletionAt:
+				input.targetDays === undefined ? undefined : target.toISOString()
 		};
 		requests = [item, ...requests];
 		history = [
@@ -173,6 +205,48 @@ export const civic = {
 		];
 		persist();
 		return item;
+	},
+	can(permission: Permission) {
+		return hasPermission(this.user?.role, permission);
+	},
+	acceptRequest(id: string, explanation = 'Pengajuan diterima untuk diproses petugas.') {
+		if (!this.can('request:accept')) return false;
+		this.changeStatus(id, 'under_review', explanation);
+		return true;
+	},
+	approveRequest(id: string, explanation = 'Pengajuan disetujui dan siap ditandatangani.') {
+		if (!this.can('request:approve')) return false;
+		this.changeStatus(id, 'approved', explanation);
+		return true;
+	},
+	updateProcess(id: string, explanation: string, status: RequestStatus = 'under_review') {
+		if (!this.can('request:update') || explanation.trim().length < 8) return false;
+		this.changeStatus(id, status, explanation);
+		return true;
+	},
+	createOfflineRequest(input: {
+		ownerId: string;
+		documentType: string;
+		title: string;
+		description: string;
+		metadata?: Record<string, string>;
+		targetDays?: number;
+	}) {
+		if (!this.can('request:create_offline')) return null;
+		const owner = this.user;
+		if (!owner) return null;
+		const previousSession = sessionId;
+		sessionId = input.ownerId;
+		const request = this.createRequest({
+			documentType: input.documentType,
+			title: input.title,
+			description: input.description,
+			metadata: { ...input.metadata, source: 'offline' },
+			assignedDepartment: 'Petugas Kelurahan',
+			targetDays: input.targetDays
+		});
+		sessionId = previousSession;
+		return request;
 	},
 	changeStatus(id: string, status: RequestStatus, explanation: string) {
 		const item = requests.find((r) => r.id === id);

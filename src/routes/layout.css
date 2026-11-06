@@ -1005,6 +1005,55 @@ h1 em {
 	gap: 4px;
 	margin-top: 2px;
 }
+.nav-group {
+	display: grid;
+	gap: 2px;
+}
+.nav-group-toggle {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	width: 100%;
+	min-height: 42px;
+	padding: 10px 14px;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+}
+.nav-group-toggle:hover,
+.nav-group-toggle.nav-group-active {
+	background: #eef3f6;
+	color: var(--navy);
+}
+.nav-chevron {
+	margin-left: auto;
+	font-size: 16px;
+}
+.nav-submenu {
+	display: grid;
+	gap: 2px;
+	padding: 0 0 4px 42px;
+}
+.nav-submenu a {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-height: 34px;
+	padding: 7px 10px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+.nav-submenu a:hover,
+.nav-submenu a.nav-active {
+	background: var(--navy);
+	color: #fff;
+}
 .sidebar nav a {
 	display: flex;
 	align-items: center;

@@ -4,6 +4,7 @@
 	let title = $state('');
 	let type = $state('Surat Domisili');
 	let description = $state('');
+	let targetDays = $state('');
 	let error = $state('');
 	function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -17,7 +18,7 @@
 			description,
 			metadata: {},
 			assignedDepartment: 'Petugas Kelurahan',
-			targetDays: 7
+			targetDays: targetDays ? Number(targetDays) : undefined
 		});
 		if (!request) {
 			error = 'Your session has expired. Please sign in again.';
@@ -45,6 +46,14 @@
 	><label class="field"
 		>Keterangan<textarea bind:value={description} rows="5" placeholder="Tambahkan keterangan jika diperlukan"
 		></textarea></label
+	><label class="field"
+		>Waktu pengerjaan yang diharapkan <span class="muted">(opsional)</span><input
+			bind:value={targetDays}
+			type="number"
+			min="1"
+			max="30"
+			placeholder="Contoh: 5 hari kerja"
+		/></label
 	>{#if error}<p class="error">{error}</p>{/if}<button class="link-button" type="submit"
 		>Ajukan sekarang →</button
 	>
