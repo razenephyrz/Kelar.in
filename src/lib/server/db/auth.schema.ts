@@ -8,17 +8,23 @@ import {
   index,
 } from "drizzle-orm/mysql-core";
 
-export const user = mysqlTable("user", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  image: text("image"),
-  createdAt: timestamp("created_at", { fsp: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { fsp: 3 })
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
+export const user = mysqlTable('user', {
+	id: varchar('id', { length: 36 }).primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	email: varchar('email', { length: 255 }).notNull().unique(),
+	username: varchar('username', { length: 255 }).unique(),
+	displayUsername: varchar('display_username', { length: 255 }),
+	emailVerified: boolean('email_verified').default(false).notNull(),
+	role: varchar('role', { length: 16 }).default('warga').notNull(),
+	status: varchar('status', { length: 16 }).default('aktif').notNull(),
+	image: text('image'),
+	createdAt: timestamp('created_at', { fsp: 3 })
+		.default(sql`CURRENT_TIMESTAMP(3)`)
+		.notNull(),
+	updatedAt: timestamp('updated_at', { fsp: 3 })
+		.default(sql`CURRENT_TIMESTAMP(3)`)
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull()
 });
 
 export const session = mysqlTable(

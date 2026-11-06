@@ -1,14 +1,43 @@
 <script lang="ts">
 	import { civic } from '#lib/store';
-	import { STATUS_META } from '#lib/types';
+	import { ROLE_META, STATUS_META } from '#lib/types';
+	import { goto } from '$app/navigation';
+
+	let message = $state('');
+	let showOfflineForm = $state(false);
+	let offlineOwner = $state('u_citizen');
+	let offlineTitle = $state('');
+
+	function runAction(action: () => boolean, success: string) {
+		if (action()) message = success;
+	}
+
+	function addOfflineRequest(event: SubmitEvent) {
+		event.preventDefault();
+		const request = civic.createOfflineRequest({
+			ownerId: offlineOwner,
+			documentType: 'Surat Domisili',
+			title: offlineTitle,
+			description: 'Pengajuan dicatat petugas dari layanan tatap muka.',
+			targetDays: 7
+		});
+		if (request) {
+			message = `${request.id} berhasil dicatat dari layanan offline.`;
+			offlineTitle = '';
+			showOfflineForm = false;
+		}
+	}
 </script>
 
 <header class="app-header">
 	<div>
 		<p class="eyebrow">Operasional</p>
 		<h1>Antrean layanan</h1>
-		<p class="muted">Kelola pengajuan warga sesuai alur SOP layanan.</p>
+		<p class="muted">{civic.user ? ROLE_META[civic.user.role].description : ''}</p>
 	</div>
+	{#if civic.can('request:create_offline')}<button class="link-button" type="button" onclick={() => (showOfflineForm = !showOfflineForm)}
+		>+ Catat pengajuan offline</button
+	>{/if}
 </header>
 <div class="metrics">
 	<div class="metric"><b>{civic.requests.length}</b><span>Semua pengajuan</span></div>
@@ -45,11 +74,22 @@
 				</div>
 				<div style="display:flex;align-items:center;gap:10px">
 					<span class={`pill ${request.status}`}>{STATUS_META[request.status].label}</span>
-					{#if civic.user?.role === 'petugas'}<button class="link-button" type="button">Verifikasi</button>
-					{:else if civic.user?.role === 'rt_rw'}<button class="link-button" type="button">Acc RT/RW</button>
-					{:else if civic.user?.role === 'lurah'}<button class="link-button" type="button">Tanda tangan</button>
-					{:else}<button class="link-button" type="button">Kelola</button>{/if}
+					{#if civic.can('request:accept') && ['submitted', 'action_required'].includes(request.status)}
+						<button class="link-button" type="button" onclick={() => runAction(() => civic.acceptRequest(request.id), 'Pengajuan diterima petugas.')}>Terima</button>
+					{:else if civic.can('request:approve') && !['approved', 'completed'].includes(request.status)}
+						<button class="link-button" type="button" onclick={() => runAction(() => civic.approveRequest(request.id), 'Persetujuan dan tanda tangan dicatat.')}>Setujui & tanda tangani</button>
+					{:else if civic.can('system:manage')}<a class="link-button" href="/dashboard/profile">Kelola role</a>
+					{:else}<span class="muted">Menunggu tindakan</span>{/if}
 				</div>
 			</div>{/each}
 	</div>
 </section>
+{#if showOfflineForm}<form class="surface form" onsubmit={addOfflineRequest}>
+	<h2 class="section-title">Catat pengajuan dari loket</h2>
+	<label class="field">Pemohon<select bind:value={offlineOwner}>
+		{#each civic.users.filter((user) => user.role === 'warga') as user}<option value={user.id}>{user.name}</option>{/each}
+	</select></label>
+	<label class="field">Judul pengajuan<input bind:value={offlineTitle} required placeholder="Contoh: Surat domisili untuk sekolah" /></label>
+	<button class="link-button" type="submit">Simpan pengajuan offline</button>
+</form>{/if}
+{#if message}<p class="demo-banner">{message}</p>{/if}

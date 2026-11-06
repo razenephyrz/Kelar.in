@@ -4,6 +4,7 @@
 	let title = $state('');
 	let type = $state('');
 	let description = $state('');
+	let targetDays = $state('');
 	let error = $state('');
 	type Service = { id: string; name: string; processingDays: number; processingTarget: string; description: string };
 	let services = $state<Service[]>([]);
@@ -23,10 +24,13 @@
 			error = 'Masukkan judul singkat untuk pengajuan.';
 			return;
 		}
-		const response = await fetch('/api/warga/requests', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ serviceId: type, title, description })
+		const request = civic.createRequest({
+			documentType: type,
+			title,
+			description,
+			metadata: {},
+			assignedDepartment: 'Petugas Kelurahan',
+			targetDays: targetDays ? Number(targetDays) : undefined
 		});
 		if (!response.ok) {
 			const result = await response.json().catch(() => null);
@@ -54,8 +58,15 @@
 		>Judul pengajuan<input bind:value={title} placeholder="Layanan yang dibutuhkan" required /></label
 	><label class="field"
 		>Keterangan<textarea bind:value={description} rows="5" placeholder="Tambahkan keterangan jika diperlukan"
-		></textarea></label>
-	{#if selected}<div class="surface"><p class="eyebrow">Estimasi dan alur</p><strong>{selected.processingTarget}</strong><p class="muted">{selected.description}</p></div>{/if}
+		></textarea></label
+	><label class="field"
+		>Waktu pengerjaan yang diharapkan <span class="muted">(opsional)</span><input
+			bind:value={targetDays}
+			type="number"
+			min="1"
+			max="30"
+			placeholder="Contoh: 5 hari kerja"
+		/></label
 	>{#if error}<p class="error">{error}</p>{/if}<button class="link-button" type="submit"
 		>Ajukan sekarang →</button
 	>

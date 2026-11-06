@@ -6,34 +6,34 @@
 
 	let query = $state(page.url.searchParams.get('q') ?? '');
 	let status = $state<'all' | RequestStatus>('all');
+	let typeFilter = $state('all');
 	let sort = $state<'updated' | 'submitted' | 'target'>('updated');
-	let requests = $state<
-		{
-			id: string;
-			title: string;
-			status: RequestStatus;
-			assignedDepartment: string;
-			updatedAt: string | Date;
-			createdAt: string | Date;
-			targetCompletionAt: string | Date;
-		}[]
-	>([]);
-	let error = $state('');
-	onMount(async () => {
-		const response = await fetch('/api/warga/requests');
-		if (!response.ok) {
-			error = 'Pengajuan belum dapat dimuat. Pastikan koneksi server tersedia.';
-			return;
-		}
-		requests = await response.json();
-	});
+
+	const statusFilters: Array<'all' | RequestStatus> = [
+		'all',
+		'draft',
+		'submitted',
+		'under_review',
+		'action_required',
+		'approved',
+		'completed',
+		'rejected'
+	];
+	const requestTypes = $derived([
+		'all',
+		...new Set(civic.myRequests.map((request) => request.documentType))
+	]);
 	const filteredRequests = $derived.by(() => {
 		const needle = query.trim().toLowerCase();
 		return requests
 			.filter((request) => {
 				const matchesQuery =
 					!needle || `${request.id} ${request.title}`.toLowerCase().includes(needle);
-				return matchesQuery && (status === 'all' || request.status === status);
+				return (
+					matchesQuery &&
+					(status === 'all' || request.status === status) &&
+					(typeFilter === 'all' || request.documentType === typeFilter)
+				);
 			})
 			.sort((a, b) => {
 				const first =
@@ -53,48 +53,275 @@
 	});
 </script>
 
-<header class="app-header">
-	<div>
-		<p class="eyebrow">Berkas kamu</p>
-		<h1>Pengajuan saya</h1>
-		<p class="muted">Riwayat pengajuan dan tahapan prosesnya.</p>
-	</div>
-	<a class="link-button" href="/dashboard/requests/new">+ Pengajuan baru</a>
-</header>
-{#if error}<p class="error" role="alert">{error}</p>{/if}
-<section class="surface">
-	<div class="request-filters">
-		<label class="field">Cari<input bind:value={query} placeholder="Cari ID atau judul" /></label>
-		<label class="field"
-			>Status<select bind:value={status}
-				><option value="all">Semua status</option>{#each Object.keys(STATUS_META) as value}<option
-						{value}>{STATUS_META[value as RequestStatus].label}</option
-					>{/each}</select
-			></label
-		>
-		<label class="field"
-			>Sort<select bind:value={sort}
-				><option value="updated">Pembaruan terakhir</option><option value="submitted"
-					>Tanggal pengajuan</option
-				><option value="target">Tanggal target</option></select
-			></label
-		>
-	</div>
-	<div class="request-list">
-		{#each filteredRequests as request}<div class="request-row">
-				<a class="request-row" href={`/dashboard/requests/${request.id}`}
-					><div>
-						<strong>{request.title}</strong><small
-							>{request.id} · {request.assignedDepartment}</small
-						>
-						<small
-							>{formatDate(new Date(request.updatedAt).toISOString())}{isOverdue(new Date(request.targetCompletionAt).toISOString(), request.status)
-								? ' · Melewati estimasi'
-								: ''}</small
-						>
-					</div>
-					<span class={`pill ${request.status}`}>{STATUS_META[request.status].label}</span>
-				</a>
-			</div>{:else}<p class="muted">Tidak ada pengajuan yang sesuai filter.</p>{/each}
-	</div>
-</section>
+<svelte:head><title>Pengajuan saya — Kelar.in</title></svelte:head>
+
+<div class="requests-page">
+	<section class="requests-hero" aria-labelledby="requests-title">
+		<div>
+			<p class="requests-kicker">Ruang layanan warga</p>
+			<h1 id="requests-title">Pengajuan saya</h1>
+			<p>Kelola pengajuan, lihat statusnya, dan lengkapi berkas yang masih diperlukan.</p>
+			<a class="hero-new-request" href="/dashboard/requests/new"
+				><span>+</span> Ajukan layanan baru</a
+			>
+		</div>
+		<div class="requests-hero-note">
+			<strong>{civic.myRequests.length}</strong>
+			<span>Total pengajuan</span>
+			<small>Data tersimpan di ruang layanan kamu.</small>
+		</div>
+	</section>
+
+	<section class="surface requests-panel" aria-labelledby="filter-title">
+		<div class="requests-panel-heading">
+			<div>
+				<p class="requests-kicker">Temukan berkas</p>
+				<h2 id="filter-title">Daftar pengajuan</h2>
+			</div>
+			<p class="result-count">
+				<strong>{filteredRequests.length}</strong> dari {civic.myRequests.length} pengajuan tampil
+			</p>
+		</div>
+
+		<div class="request-filters">
+			<label class="field">
+				<span>Cari pengajuan</span>
+				<input bind:value={query} placeholder="Cari ID atau judul" />
+			</label>
+			<label class="field">
+				<span>Jenis layanan</span>
+				<select bind:value={typeFilter}>
+					<option value="all">Semua jenis layanan</option>
+					{#each requestTypes.slice(1) as type}<option value={type}>{type}</option>{/each}
+				</select>
+			</label>
+			<label class="field">
+				<span>Urutkan berdasarkan</span>
+				<select bind:value={sort}>
+					<option value="updated">Pembaruan terakhir</option>
+					<option value="submitted">Tanggal pengajuan</option>
+					<option value="target">Tanggal target</option>
+				</select>
+			</label>
+		</div>
+
+		<div class="status-filters" aria-label="Saring berdasarkan status">
+			{#each statusFilters as filter}
+				<button
+					class:status-filter-active={status === filter}
+					type="button"
+					onclick={() => (status = filter)}
+				>
+					{filter === 'all' ? 'Semua' : STATUS_META[filter].label}
+				</button>
+			{/each}
+		</div>
+
+		<div class="requests-table-wrap">
+			<table class="requests-table">
+				<thead>
+					<tr>
+						<th>Pengajuan</th>
+						<th>Status</th>
+						<th>Diperbarui</th>
+						<th>Target</th>
+						<th>Aksi</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each filteredRequests as request}
+						<tr>
+							<td>
+								<a class="table-request" href={`/dashboard/requests/${request.id}`}>
+									<strong>{request.id}</strong>
+									<b>{request.title}</b>
+									<small>{request.documentType}</small>
+								</a>
+							</td>
+							<td>
+								<span class={`pill ${request.status}`}>{STATUS_META[request.status].label}</span>
+							</td>
+							<td>
+								<small>{formatDate(request.updatedAt)}</small>
+							</td>
+							<td>
+								<small class:date-overdue={isOverdue(request.targetCompletionAt, request.status)}>
+									{formatDate(request.targetCompletionAt)}
+									{isOverdue(request.targetCompletionAt, request.status)
+										? ' · Melewati estimasi'
+										: ''}
+								</small>
+							</td>
+							<td>
+								{#if ['draft', 'submitted', 'action_required'].includes(request.status)}
+									<button
+										class="delete-button"
+										type="button"
+										onclick={() => civic.deleteRequest(request.id)}
+										aria-label={`Hapus ${request.id}`}>Hapus</button
+									>
+								{:else}
+									<a class="table-action" href={`/dashboard/requests/${request.id}`}>Buka</a>
+								{/if}
+							</td>
+						</tr>
+					{:else}
+						<tr>
+							<td class="empty-table" colspan="5">
+								<strong>Tidak ada pengajuan yang sesuai.</strong>
+								<span>Coba ubah kata kunci atau filter yang digunakan.</span>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</section>
+</div>
+
+<style>
+	.requests-page {
+		display: grid;
+		gap: 20px;
+	}
+
+	.requests-hero::before,
+	.requests-hero::after {
+		display: none;
+	}
+
+	.requests-hero {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 24px;
+	}
+
+	.requests-hero-note {
+		display: grid;
+		min-width: 190px;
+		gap: 4px;
+		padding: 18px;
+		background: rgba(255, 255, 255, 0.72);
+	}
+
+	.requests-hero-note strong {
+		font: 650 38px/1 Fraunces, serif;
+		color: var(--navy);
+	}
+
+	.requests-hero-note span {
+		font-size: 12px;
+		font-weight: 700;
+	}
+
+	.requests-hero-note small {
+		margin-top: 6px;
+		color: #526a7d;
+		font-size: 10px;
+		line-height: 1.5;
+	}
+
+	.requests-panel-heading {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 20px;
+		margin-bottom: 20px;
+	}
+
+	.requests-panel-heading h2 {
+		margin: 0;
+		font: 500 28px/1.1 Fraunces, serif;
+	}
+
+	.requests-panel-heading .requests-kicker {
+		margin-bottom: 7px;
+	}
+
+	.requests-panel-heading .result-count {
+		margin: 0;
+	}
+
+	.field {
+		display: grid;
+		gap: 7px;
+		color: var(--muted);
+		font-size: 11px;
+		font-weight: 600;
+	}
+
+	.field input,
+	.field select {
+		width: 100%;
+		min-height: 42px;
+		padding: 0 12px;
+		border: 1px solid var(--line);
+		border-radius: 0;
+		background: #fff;
+		color: var(--ink);
+		font-size: 12px;
+		outline: 0;
+	}
+
+	.field input:focus,
+	.field select:focus {
+		border-color: var(--blue);
+		box-shadow: 0 0 0 3px rgba(96, 150, 186, 0.14);
+	}
+
+	.requests-table td {
+		height: 78px;
+	}
+
+	.requests-table td > small {
+		white-space: normal;
+	}
+
+	.date-overdue {
+		color: #8e4444 !important;
+		font-weight: 700;
+	}
+
+	.table-action {
+		color: var(--navy);
+		font-size: 11px;
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.empty-table {
+		display: grid;
+		gap: 5px;
+		padding: 35px 20px !important;
+		color: var(--muted);
+		text-align: center;
+	}
+
+	.empty-table strong {
+		color: var(--ink);
+		font-size: 13px;
+	}
+
+	.empty-table span {
+		font-size: 11px;
+	}
+
+	@media (max-width: 720px) {
+		.requests-hero {
+			align-items: start;
+			flex-direction: column;
+			padding: 30px 24px;
+		}
+
+		.requests-hero-note {
+			width: 100%;
+		}
+
+		.requests-panel-heading {
+			align-items: start;
+			flex-direction: column;
+		}
+	}
+</style>

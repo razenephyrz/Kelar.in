@@ -1,93 +1,186 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { civic } from '#lib/store';
-	import { formatDate } from '../../lib/utils';
+	import { STATUS_META, PIPELINE_STAGES, statusToStageIndex } from '#lib/types';
+	import { daysUntil, formatDate, isOverdue, progressForStatus, timeAgo } from '../../lib/utils';
 
-	type CitizenRequest = {
-		id: string;
-		title: string;
-		status: string;
-		updatedAt: string | Date;
-	};
-	let citizenRequests = $state<CitizenRequest[]>([]);
-	let citizenError = $state('');
-	onMount(async () => {
-		if (civic.user?.role !== 'warga') return;
-		const response = await fetch('/api/warga/requests');
-		if (!response.ok) {
-			citizenError = 'Data pengajuan belum dapat dimuat. Pastikan koneksi server tersedia.';
-			return;
-		}
-		citizenRequests = await response.json();
-	});
-
-	const total = $derived(citizenRequests.length);
-	const inProgress = $derived(citizenRequests.filter((request) => ['submitted', 'under_review'].includes(request.status)).length);
-	const actionRequired = $derived(citizenRequests.filter((request) => request.status === 'action_required').length);
-	const done = $derived(citizenRequests.filter((request) => ['approved', 'completed'].includes(request.status)).length);
+	const total = $derived(civic.myRequests.length);
+	const inProgress = $derived(
+		civic.myRequests.filter((request) => ['submitted', 'under_review'].includes(request.status))
+			.length
+	);
+	const actionNeeded = $derived(
+		civic.myRequests.filter((request) => request.status === 'action_required').length
+	);
+	const completed = $derived(
+		civic.myRequests.filter((request) => ['approved', 'completed'].includes(request.status)).length
+	);
+	const latest = $derived(
+		civic.myRequests.find((request) => request.status !== 'draft') ?? civic.myRequests[0]
+	);
+	const actionList = $derived(
+		civic.myRequests.filter((request) => request.status === 'action_required')
+	);
 	const today = new Date();
+	const greeting =
+		today.getHours() < 12
+			? 'Good morning'
+			: today.getHours() < 18
+				? 'Good afternoon'
+				: 'Good evening';
 </script>
 
-<svelte:head><title>Dashboard — Kelar.in</title></svelte:head>
+<svelte:head><title>Overview — CivicFlow</title></svelte:head>
 
-{#if civic.user?.role === 'warga'}
+<div class="dashboard-overview">
 	<section class="overview-hero" aria-labelledby="overview-title">
 		<div class="overview-copy">
-			<p class="overview-date">{today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-			<h1 id="overview-title">Selamat datang,<br />{civic.user.name.split(' ')[0]}.</h1>
-			<p class="overview-summary">Kamu memiliki {total} pengajuan · {inProgress} sedang diproses · {actionRequired} perlu perhatian.</p>
+			<p class="overview-date">
+				{today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+			</p>
+			<h1 id="overview-title">{greeting},<br />{civic.user?.name.split(' ')[0]}.</h1>
+			<p class="overview-summary">
+				{total
+					? `You have ${total} requests · ${inProgress} in progress${actionNeeded ? ` · ${actionNeeded} needs your attention` : ''}.`
+					: 'You have no requests yet — file your first one and watch it move.'}
+			</p>
 			<div class="overview-actions">
-				<a class="hero-new-request" href="/dashboard/requests/new"><span>+</span> Pengajuan<br />baru</a>
-				<a class="hero-view-all" href="/dashboard/requests">Lihat<br />semua <span>→</span></a>
+				<a class="hero-new-request" href="/dashboard/requests/new"
+					><span>+</span> New<br />request</a
+				><a class="hero-view-all" href="/dashboard/requests">View<br />all <span>→</span></a>
 			</div>
 		</div>
-		<div class="overview-metrics" aria-label="Ringkasan pengajuan">
-			<div><b>{total}</b><span>Total</span></div><div><b>{inProgress}</b><span>Diproses</span></div>
-			<div><b>{actionRequired}</b><span>Perlu tindakan</span></div><div><b>{done}</b><span>Selesai</span></div>
+		<div class="overview-metrics" aria-label="Request summary">
+			<div><b>{total}</b><span>Total</span></div>
+			<div><b>{inProgress}</b><span>In progress</span></div>
+			<div><b>{actionNeeded}</b><span>Action</span></div>
+			<div><b>{completed}</b><span>Done</span></div>
 		</div>
 	</section>
-	{#if citizenError}<p class="error" role="alert">{citizenError}</p>{/if}
-	<section class="overview-lower">
-		<div class="overview-section-heading"><div><p class="eyebrow">Pantau terus</p><h2 class="section-title">Pengajuan terbaru</h2></div><a class="text-link" href="/dashboard/requests">Lihat semua →</a></div>
-		<div class="overview-request-list">
-			{#each citizenRequests.slice(0, 4) as request}
-				<a class="overview-request" href={`/dashboard/requests/${request.id}`}><span class="request-mark">{request.title.slice(0, 1)}</span><span class="overview-request-copy"><strong>{request.title}</strong><small>{request.id} · Diperbarui {formatDate(new Date(request.updatedAt).toISOString())}</small></span><span class={`pill ${request.status}`}>{request.status.replace('_', ' ')}</span><span class="overview-arrow">→</span></a>
-			{:else}<p class="muted">Belum ada pengajuan. Buat pengajuan pertama untuk mulai melacak proses.</p>{/each}
-		</div>
-	</section>
-{:else if civic.user?.role === 'petugas'}
-	<header class="app-header"><div><p class="eyebrow">Meja kerja petugas</p><h1>Verifikasi pengajuan</h1><p class="muted">Terima pengajuan warga, periksa kelengkapan berkas, dan teruskan sesuai SOP.</p></div><a class="link-button" href="/admin">Buka antrean →</a></header>
-	<div class="metrics">
-		<div class="metric"><b>{civic.requests.filter((r) => r.status === 'submitted').length}</b><span>Menunggu verifikasi</span></div>
-		<div class="metric"><b>{civic.requests.filter((r) => r.status === 'under_review').length}</b><span>Sedang diproses</span></div>
-		<div class="metric"><b>{civic.requests.filter((r) => r.status === 'action_required').length}</b><span>Perlu perbaikan</span></div>
-		<div class="metric"><b>{civic.requests.filter((r) => r.escalationFlag).length}</b><span>Melewati estimasi</span></div>
+
+	<div class="demo-banner">
+		<span>✓</span>
+		<p>
+			<strong>Demonstration data.</strong> Records, dates and processing targets are illustrative samples
+			— not official service standards.
+		</p>
 	</div>
-	<section class="surface"><h2 class="section-title">Tugas petugas</h2><div class="request-list">
-		<div class="request-row"><div><strong>Verifikasi berkas warga</strong><small>Pastikan identitas dan dokumen pendukung sesuai checklist.</small></div><span class="pill under_review">Mulai</span></div>
-		<div class="request-row"><div><strong>Tambahkan pengajuan offline</strong><small>Catat pengajuan warga yang datang langsung ke kelurahan.</small></div><span class="pill submitted">Buka</span></div>
-		<div class="request-row"><div><strong>Perbarui status melalui inbox</strong><small>Kirim informasi proses dan permintaan perbaikan kepada warga.</small></div><span class="pill approved">Kelola</span></div>
-	</div></section>
-{:else if civic.user?.role === 'rt_rw'}
-	<header class="app-header"><div><p class="eyebrow">Persetujuan wilayah</p><h1>Antrean acc RT/RW</h1><p class="muted">Periksa pengantar dan berikan persetujuan untuk pengajuan Surat Domisili warga.</p></div><a class="link-button" href="/admin">Lihat antrean →</a></header>
-	<div class="metrics"><div class="metric"><b>3</b><span>Menunggu acc</span></div><div class="metric"><b>12</b><span>Disetujui bulan ini</span></div><div class="metric"><b>1</b><span>Perlu dilengkapi</span></div><div class="metric"><b>4,5 / 5</b><span>Rating warga</span></div></div>
-	<section class="surface"><h2 class="section-title">Tugas RT/RW</h2><div class="request-list">
-		<div class="request-row"><div><strong>Surat Domisili — Andi Pratama</strong><small>Periksa alamat, identitas, dan surat pengantar warga.</small></div><span class="pill under_review">Periksa</span></div>
-		<div class="request-row"><div><strong>Berikan acc atau catatan</strong><small>Setujui pengajuan atau kembalikan dengan alasan yang jelas.</small></div><span class="pill approved">Tindakan</span></div>
-	</div></section>
-{:else if civic.user?.role === 'lurah'}
-	<header class="app-header"><div><p class="eyebrow">Persetujuan pimpinan</p><h1>Validasi dan tanda tangan</h1><p class="muted">Tinjau pengajuan yang membutuhkan acc lurah sebelum surat diterbitkan.</p></div><a class="link-button" href="/admin">Lihat pengajuan →</a></header>
-	<div class="metrics"><div class="metric"><b>2</b><span>Menunggu tanda tangan</span></div><div class="metric"><b>18</b><span>Disetujui bulan ini</span></div><div class="metric"><b>2</b><span>Dikembalikan</span></div><div class="metric"><b>4,6 / 5</b><span>Rating warga</span></div></div>
-	<section class="surface"><h2 class="section-title">Tugas lurah</h2><div class="request-list">
-		<div class="request-row"><div><strong>Surat Keterangan Belum Menikah</strong><small>Pastikan hasil verifikasi petugas lengkap sebelum acc.</small></div><span class="pill under_review">Tinjau</span></div>
-		<div class="request-row"><div><strong>Surat Domisili</strong><small>Periksa persetujuan RT/RW dan catatan petugas.</small></div><span class="pill approved">Tanda tangan</span></div>
-	</div></section>
-{:else}
-	<header class="app-header"><div><p class="eyebrow">Pengaturan sistem</p><h1>Kelola Kelar.in</h1><p class="muted">Atur akun, layanan, estimasi, dan alur SOP untuk kebutuhan demo lomba.</p></div><a class="link-button" href="/admin">Buka pengaturan →</a></header>
-	<div class="metrics"><div class="metric"><b>{civic.users.length}</b><span>Total akun</span></div><div class="metric"><b>{civic.procedures.length}</b><span>Layanan aktif</span></div><div class="metric"><b>{civic.requests.length}</b><span>Data pengajuan</span></div><div class="metric"><b>5</b><span>Role sistem</span></div></div>
-	<section class="surface"><h2 class="section-title">Yang dapat dikelola</h2><div class="request-list">
-		<div class="request-row"><div><strong>Peran akun</strong><small>Atur akses warga, petugas, lurah, dan RT/RW.</small></div><span class="pill approved">Kelola</span></div>
-		<div class="request-row"><div><strong>Layanan dan checklist</strong><small>Atur persyaratan KTP, Akta Kematian, Slip Gaji, Domisili, dan SKBM.</small></div><span class="pill approved">Kelola</span></div>
-		<div class="request-row"><div><strong>SOP dan estimasi</strong><small>Tentukan apakah layanan memerlukan acc RT/RW atau lurah.</small></div><span class="pill approved">Kelola</span></div>
-	</div></section>
-{/if}
+
+	<div class="dashboard-content-grid">
+		<section class="dashboard-panel recent-panel" aria-label="Recent requests">
+			<div class="dashboard-panel-heading">
+				<h2>Recent requests</h2>
+				<a href="/dashboard/requests">All requests ↗</a>
+			</div>
+			{#if civic.myRequests.length}<div class="dashboard-request-list">
+					{#each civic.myRequests.slice(0, 5) as request}<a
+							class="dashboard-request-row"
+							href={`/dashboard/requests/${request.id}`}
+							><span
+								class="request-status-bar"
+								style={`background:${STATUS_META[request.status].dot}`}
+							></span><span class="dashboard-request-copy"
+								><span class="dashboard-request-meta"
+									><strong>{request.id}</strong><span class={`pill ${request.status}`}
+										>{STATUS_META[request.status].label}</span
+									>{#if isOverdue(request.targetCompletionAt, request.status)}<em
+											>Past sample target</em
+										>{/if}</span
+								><b>{request.title}</b><small
+									>{request.documentType} · updated {timeAgo(request.updatedAt)}</small
+								></span
+							><span class="overview-arrow">→</span></a
+						>{/each}
+				</div>{:else}<div class="dashboard-empty">
+					<b>No requests yet</b>
+					<p>
+						Create your first administrative request to see tracking, timelines, and reminders here.
+					</p>
+					<a class="link-button" href="/dashboard/requests/new">+ Create request</a>
+				</div>{/if}
+		</section>
+
+		<section class="tracking-panel" aria-label="Latest progress">
+			<p class="tracking-kicker">Now tracking</p>
+			{#if latest}<p class="tracking-id">{latest.id}</p>
+				<h2>{latest.title}</h2>
+				<div class="tracking-progress">
+					<div class="progress-ring" style={`--progress:${progressForStatus(latest.status)}%`}>
+						<b>{progressForStatus(latest.status)}%</b><small
+							>{STATUS_META[latest.status].label}</small
+						>
+					</div>
+					<div>
+						<p>{STATUS_META[latest.status].description}</p>
+						<small
+							>{isOverdue(latest.targetCompletionAt, latest.status)
+								? 'Past sample target — flagged for review'
+								: `Sample estimate: ${formatDate(latest.targetCompletionAt)} (${daysUntil(latest.targetCompletionAt)}d)`}</small
+						><a href={`/dashboard/requests/${latest.id}`}>Open timeline →</a>
+					</div>
+				</div>
+				<div class="stage-strip">
+					{#each PIPELINE_STAGES as stage, index}<span
+							class:stage-done={index <= statusToStageIndex(latest.status)}
+						></span>{/each}
+				</div>
+				<div class="stage-labels"><span>Received</span><span>Issuance</span></div>{:else}<p>
+					No active file yet.
+				</p>{/if}
+		</section>
+	</div>
+
+	<div class="dashboard-content-grid dashboard-lower-grid">
+		<section class="dashboard-panel action-panel" aria-label="Action required">
+			<div class="dashboard-panel-heading">
+				<div>
+					<h2>Action required</h2>
+					<small
+						>{actionList.length
+							? `${actionList.length} file${actionList.length === 1 ? '' : 's'} waiting on you`
+							: 'Nothing waiting on you right now'}</small
+					>
+				</div>
+				<span class="panel-symbol">!</span>
+			</div>
+			{#if actionList.length}{#each actionList as request}<a
+						class="action-item"
+						href={`/dashboard/requests/${request.id}`}
+						><strong>{request.id}</strong><b>{request.title}</b
+						>{#each request.requiredActions.slice(0, 2) as action}<small>• {action}</small
+							>{/each}<span>Resolve now →</span></a
+					>{/each}{:else}<p class="clear-state">
+					All clear — no missing documents or confirmations pending.
+				</p>{/if}
+		</section>
+
+		<section class="dashboard-panel notification-panel" aria-label="Recent notifications">
+			<div class="dashboard-panel-heading">
+				<div>
+					<h2>Recent notifications</h2>
+					<small>{civic.unreadCount} unread · prototype messages</small>
+				</div>
+				<a href="/dashboard/inbox">Inbox ↗</a>
+			</div>
+			{#each civic.myNotifications.slice(0, 4) as notification}<a
+					class="notification-row"
+					href={notification.requestId
+						? `/dashboard/requests/${notification.requestId}`
+						: '/dashboard/inbox'}
+					><span class:notification-unread={!notification.isRead}></span><span
+						><b>{notification.title}</b><small>{notification.message}</small><em
+							>{timeAgo(notification.createdAt)}</em
+						></span
+					></a
+				>{:else}<p class="muted">No messages yet.</p>{/each}
+			<div class="completion-progress">
+				<div>
+					<span style={`width:${total ? Math.round((completed / total) * 100) : 0}%`}></span>
+				</div>
+				<small
+					>{completed} of {total} requests completed or approved · derived live from your files</small
+				>
+			</div>
+		</section>
+	</div>
+</div>
