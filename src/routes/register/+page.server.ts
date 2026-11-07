@@ -36,15 +36,18 @@ export const actions: Actions = {
 		if (phoneValue && !normalisasiHp(phoneValue)) return fail(400, { error: 'Format nomor HP tidak valid.' });
 		if (!kelurahanId || !/^\d{1,3}$/.test(rt) || !/^\d{1,3}$/.test(rw))
 			return fail(400, { error: 'Kelurahan, RT, dan RW wajib diisi.' });
-		if (kind === 'petugas' && (!validasiNipd(nipd) || !['pegawai', 'rtrw'].includes(staffRole)))
+		if (kind === 'petugas' && !['pegawai', 'rtrw'].includes(staffRole))
 			return fail(400, { error: 'Data petugas tidak valid.' });
+		if (kind === 'petugas' && staffRole === 'pegawai' && !validasiNipd(nipd))
+			return fail(400, { error: 'NIPD pegawai kelurahan wajib diisi dengan format yang valid.' });
 
 		let createdUserId: string | undefined;
 		try {
 			const nikHash = hashNik(nik);
 			if (AUTH_STORAGE === 'memory') {
 				if (hasLocalNik(nikHash)) return fail(409, { error: 'NIK sudah terdaftar.' });
-				if (kind === 'petugas' && hasLocalNipd(nipd)) return fail(409, { error: 'NIPD sudah terdaftar.' });
+				if (kind === 'petugas' && staffRole === 'pegawai' && hasLocalNipd(nipd))
+					return fail(409, { error: 'NIPD sudah terdaftar.' });
 			}
 			if (AUTH_STORAGE !== 'memory') {
 				const [wargaByNik, pegawaiByNik, rtrwByNik] = await Promise.all([
@@ -53,7 +56,7 @@ export const actions: Actions = {
 					db.select({ id: profilRtrw.id }).from(profilRtrw).where(eq(profilRtrw.nikHash, nikHash)).limit(1)
 				]);
 				if (wargaByNik.length || pegawaiByNik.length || rtrwByNik.length) return fail(409, { error: 'NIK sudah terdaftar.' });
-				if (kind === 'petugas') {
+				if (kind === 'petugas' && staffRole === 'pegawai') {
 					const [pegawaiByNipd, rtrwByNipd] = await Promise.all([
 						db.select({ id: profilPegawai.id }).from(profilPegawai).where(eq(profilPegawai.nipd, nipd)).limit(1),
 						db.select({ id: profilRtrw.id }).from(profilRtrw).where(eq(profilRtrw.nipd, nipd)).limit(1)
@@ -63,7 +66,7 @@ export const actions: Actions = {
 			}
 
 			const result = await auth.api.signUpEmail({
-				body: { name, email, password, ...(kind === 'petugas' ? { username: nipd } : {}) },
+				body: { name, email, password, ...(kind === 'petugas' && staffRole === 'pegawai' ? { username: nipd } : {}) },
 				headers: event.request.headers
 			});
 			createdUserId = result.user.id;
@@ -78,7 +81,7 @@ export const actions: Actions = {
 			const common = { id: newProfileId(), userId: createdUserId, nikHash, nikEncrypted: encryptNik(nik), phone: phoneValue ? normalisasiHp(phoneValue) : null, kelurahanId, createdAt: new Date() };
 			if (AUTH_STORAGE !== 'memory') {
 				if (kind === 'warga') await db.insert(profilWarga).values({ ...common, rt: rt.padStart(3, '0'), rw: rw.padStart(3, '0') });
-				else if (role === 'rtrw') await db.insert(profilRtrw).values({ ...common, nipd, rt: rt.padStart(3, '0'), rw: rw.padStart(3, '0') });
+				else if (role === 'rtrw') await db.insert(profilRtrw).values({ ...common, rt: rt.padStart(3, '0'), rw: rw.padStart(3, '0') });
 				else await db.insert(profilPegawai).values({ ...common, nipd });
 			}
 		} catch (error) {

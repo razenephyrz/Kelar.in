@@ -37,7 +37,7 @@ export const profilPegawai = mysqlTable('profil_pegawai', {
 export const profilRtrw = mysqlTable('profil_rtrw', {
 	id: varchar('id', { length: 36 }).primaryKey(),
 	userId: varchar('user_id', { length: 36 }).notNull().unique(),
-	nipd: varchar('nipd', { length: 32 }).notNull().unique(),
+	nipd: varchar('nipd', { length: 32 }).unique(),
 	nikHash: varchar('nik_hash', { length: 64 }).notNull().unique(),
 	nikEncrypted: text('nik_encrypted').notNull(),
 	phone: varchar('phone', { length: 16 }),

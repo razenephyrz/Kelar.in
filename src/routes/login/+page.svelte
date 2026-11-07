@@ -20,7 +20,7 @@
 		<div class="form-card">
 			<a class="text-link" href="/">← Kembali ke Kelar.in</a>
 			<h1>Masuk</h1>
-			<p class="muted">Gunakan email warga atau NIPD petugas.</p>
+			<p class="muted">Gunakan email warga/RT atau NIPD petugas kelurahan.</p>
 			<form class="form" method="POST" action="?/signIn" use:enhance>
 				<label class="field">Email atau NIPD
 					<input name="identifier" autocomplete="username" placeholder="nama@email.com atau NIPD" required />
