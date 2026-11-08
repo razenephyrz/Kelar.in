@@ -26,6 +26,11 @@ export function addLocalProfile(profile: LocalProfile) {
 	profiles.set(profile.userId, profile);
 }
 
+export function removeLocalAccount(userId: string) {
+	profiles.delete(userId);
+	roles.delete(userId);
+}
+
 export function hasLocalNik(nikHash: string) {
 	return [...profiles.values()].some((profile) => profile.nikHash === nikHash);
 }

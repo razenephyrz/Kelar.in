@@ -6,8 +6,8 @@ import { auth } from '#lib/server/auth.ts';
 import { db } from '#lib/server/db/index.ts';
 import { profilPegawai, profilRtrw, profilWarga, user } from '#lib/server/db/schema.ts';
 import { encryptNik, hashNik, newProfileId, normalisasiHp, validasiNik, validasiNipd } from '#lib/server/auth-validation.ts';
-import { addLocalProfile, hasLocalNik, hasLocalNipd, setLocalAccount } from '#lib/server/local-auth-store.ts';
-import { AUTH_STORAGE } from '$app/env/private';
+import { addLocalProfile, hasLocalNik, hasLocalNipd, removeLocalAccount, setLocalAccount } from '#lib/server/local-auth-store.ts';
+import { AUTH_STORAGE, REQUIRE_EMAIL_VERIFICATION } from '$app/env/private';
 
 function text(data: FormData, key: string) {
 	return String(data.get(key) ?? '').trim();
@@ -85,7 +85,10 @@ export const actions: Actions = {
 				else await db.insert(profilPegawai).values({ ...common, nipd });
 			}
 		} catch (error) {
-			if (createdUserId) await db.delete(user).where(eq(user.id, createdUserId));
+			if (createdUserId) {
+				if (AUTH_STORAGE === 'memory') removeLocalAccount(createdUserId);
+				else await db.delete(user).where(eq(user.id, createdUserId));
+			}
 			if (error instanceof Error && /BETTER_AUTH_NIK_KEY|DATABASE_URL|profil_warga|profil_pegawai|profil_rtrw/i.test(error.message)) {
 				console.error('Konfigurasi registrasi belum siap:', error.message);
 				return fail(503, { error: 'Pendaftaran sedang belum tersedia. Hubungi administrator.' });
@@ -95,6 +98,6 @@ export const actions: Actions = {
 			console.error('Registrasi gagal:', error instanceof Error ? error.message : JSON.stringify(error));
 			return fail(500, { error: 'Pendaftaran belum berhasil. Coba lagi.' });
 		}
-		throw redirect(303, '/cek-email');
+		throw redirect(303, REQUIRE_EMAIL_VERIFICATION === 'true' ? '/cek-email' : '/login');
 	}
 };

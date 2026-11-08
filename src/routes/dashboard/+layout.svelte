@@ -1,15 +1,19 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import { civic } from '#lib/store';
 	import { ROLE_META } from '#lib/types';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
 	let search = $state('');
 	let collapsed = $state(false);
 	let openMenu = $state<'tracking' | 'education' | 'accountability' | null>('tracking');
-	if (typeof window !== 'undefined' && !civic.user) goto('/login');
+
+	onMount(() => {
+		civic.setAuthenticatedUser(data.authUser);
+	});
 
 	function submitSearch(event: SubmitEvent) {
 		event.preventDefault();
@@ -68,7 +72,8 @@
 			<button
 				class="logout"
 				aria-label="Keluar"
-				onclick={() => {
+				onclick={async () => {
+					await fetch('/api/auth/sign-out', { method: 'POST' });
 					civic.logout();
 					goto('/');
 				}}>↪</button

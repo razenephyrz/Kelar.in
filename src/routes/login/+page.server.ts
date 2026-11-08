@@ -28,10 +28,13 @@ export const actions: Actions = {
 			const status = account?.status;
 			if (status === 'pending') throw redirect(303, '/menunggu-persetujuan');
 			if (status === 'ditolak') throw redirect(303, '/akun-ditolak');
-			throw redirect(303, role === 'lurah' ? '/lurah' : role === 'pegawai' ? '/petugas' : role === 'rtrw' ? '/rtrw' : '/dashboard');
+			throw redirect(303, role === 'lurah' ? '/lurah' : '/dashboard');
 		} catch (error) {
 			if (isRedirect(error)) throw error;
-			if (error instanceof APIError) return fail(400, { error: genericError });
+			if (error instanceof APIError) {
+				console.error('Login ditolak:', error.status, error.body?.code, error.message);
+				return fail(400, { error: genericError });
+			}
 			console.error('Login gagal:', error instanceof Error ? error.message : JSON.stringify(error));
 			return fail(500, { error: 'Layanan sedang bermasalah. Coba lagi.' });
 		}
