@@ -11,21 +11,24 @@ import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
-import { db } from '#lib/server/db/index.ts';
 import { username } from 'better-auth/plugins';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import { setLocalAccount } from './local-auth-store';
 
 const memoryDatabase = { user: [], session: [], account: [], verification: [] };
+const database =
+	AUTH_STORAGE === 'memory'
+		? memoryAdapter(memoryDatabase)
+		: drizzleAdapter((await import('#lib/server/db/index.ts')).db, { provider: 'mysql' });
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
 	secret: BETTER_AUTH_SECRET,
-	database: AUTH_STORAGE === 'memory' ? memoryAdapter(memoryDatabase) : drizzleAdapter(db, { provider: 'mysql' }),
+	database,
 	user: {
 		additionalFields: {
-			role: { type: 'string', input: false, returned: false, defaultValue: 'warga' },
-			status: { type: 'string', input: false, returned: false, defaultValue: 'aktif' }
+			role: { type: 'string', input: false, returned: true, defaultValue: 'warga' },
+			status: { type: 'string', input: false, returned: true, defaultValue: 'aktif' }
 		}
 	},
 	emailAndPassword: {

@@ -56,7 +56,8 @@ const setSession = (id: string | null) => {
 	save(keys.session, id ? { userId: id } : null);
 };
 
-const setAuthenticatedUser = (input: Pick<User, 'id' | 'name' | 'email' | 'role'>) => {
+const setAuthenticatedUser = (input?: Pick<User, 'id' | 'name' | 'email' | 'role'>) => {
+	if (!input?.id) return;
 	const existing = users.find((item) => item.id === input.id);
 	const authenticatedUser: User = {
 		id: input.id,
@@ -96,8 +97,9 @@ export const civic = {
 	},
 	get myRequests() {
 		const u = this.user;
+		if (!u) return [];
 		return requests
-			.filter((r) => u?.role !== 'warga' || r.ownerId === u?.id)
+			.filter((r) => u.role !== 'warga' || r.ownerId === u.id)
 			.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
 	},
 	get myNotifications() {

@@ -1,17 +1,24 @@
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
 import { building } from '$app/env';
 import { auth } from '#lib/server/auth.ts';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
-	const session = await auth.api.getSession({ headers: event.request.headers });
-
-	if (session) {
-		event.locals.session = session.session;
-		event.locals.user = session.user;
+	try {
+		const session = await auth.api.getSession({ headers: event.request.headers });
+		if (session) {
+			event.locals.session = session.session;
+			event.locals.user = session.user;
+		}
+	} catch (e) {
+		console.error('Session retrieval error in hooks:', e);
 	}
 
 	return svelteKitHandler({ event, resolve, auth, building });
 };
 
 export const handle: Handle = handleBetterAuth;
+
+export const handleError: HandleServerError = ({ error, event }) => {
+	console.error(`[Server Error] ${event.url.pathname}:`, error);
+};

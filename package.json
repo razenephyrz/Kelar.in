@@ -15,8 +15,8 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
 		"db:push": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs push",
-"db:generate": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs generate",
-"db:migrate": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs migrate",
+		"db:generate": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs generate",
+		"db:migrate": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs migrate",
 		"db:studio": "drizzle-kit studio",
 		"auth:create-lurah": "node --env-file=.env --experimental-strip-types scripts/create-lurah.ts",
 		"auth:schema": "auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"

@@ -1,13 +1,29 @@
 <script lang="ts">
 	import { civic } from '#lib/store';
-	import { ROLE_META } from '#lib/types';
+	import { ROLE_META, type Role } from '#lib/types';
+	import type { PageProps } from './$types';
 
-	let name = $state(civic.user?.name ?? '');
-	let email = $state(civic.user?.email ?? '');
+	let { data }: PageProps = $props();
+
+	let name = $state('');
+	let email = $state('');
 	let currentPassword = $state('');
 	let newPassword = $state('');
 	let message = $state('');
 	let error = $state('');
+
+	$effect(() => {
+		name = data?.authUser?.name ?? civic.user?.name ?? '';
+		email = data?.authUser?.email ?? civic.user?.email ?? '';
+	});
+
+	const userRole = $derived<Role>(
+		(data?.authUser?.role ?? civic.user?.role) && (data?.authUser?.role ?? civic.user?.role) in ROLE_META
+			? ((data?.authUser?.role ?? civic.user?.role) as Role)
+			: 'warga'
+	);
+	const roleMeta = $derived(ROLE_META[userRole] ?? ROLE_META.warga);
+	const avatarInitial = $derived((name || civic.user?.name || 'W').trim().slice(0, 1) || 'W');
 
 	const documents = $derived(
 		civic.myRequests.reduce((total, request) => total + Object.keys(request.metadata).length, 0)
@@ -48,13 +64,13 @@
 <div class="profile-layout">
 	<section class="surface profile-summary">
 		<div class="profile-identity">
-			<div class="profile-avatar">{civic.user?.name.slice(0, 1)}</div>
+			<div class="profile-avatar">{avatarInitial}</div>
 			<div>
-				<h2>{civic.user?.name}</h2>
-				<p class="muted">{civic.user ? ROLE_META[civic.user.role].label : ''}</p>
+				<h2>{name || civic.user?.name || 'Pengguna'}</h2>
+				<p class="muted">{roleMeta.label}</p>
 			</div>
 		</div>
-		<p class="muted">{civic.user ? ROLE_META[civic.user.role].description : ''}</p>
+		<p class="muted">{roleMeta.description}</p>
 		<div class="profile-stats">
 			<div><b>{civic.myRequests.length}</b><span>Pengajuan</span></div>
 			<div><b>{civic.myRequests.filter((request) => request.status === 'completed').length}</b><span>Selesai</span></div>

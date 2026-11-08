@@ -63,8 +63,15 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 	]
 };
 
-export function hasPermission(role: Role | undefined, permission: Permission): boolean {
-	return role ? ROLE_PERMISSIONS[role].includes(permission) : false;
+export function hasPermission(
+    role: Role | undefined,
+    permission: Permission
+): boolean {
+    if (!role) return false;
+
+    const permissions = ROLE_PERMISSIONS[role];
+
+    return permissions?.includes(permission) ?? false;
 }
 
 export interface User {
@@ -231,3 +238,6 @@ export function statusToStageIndex(status: RequestStatus): number {
 			return 1;
 	}
 }
+
+console.log('Current role:', role);
+console.log('Available roles:', Object.keys(ROLE_PERMISSIONS));

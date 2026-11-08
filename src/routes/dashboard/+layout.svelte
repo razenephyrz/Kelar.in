@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { civic } from '#lib/store';
-	import { ROLE_META } from '#lib/types';
+	import { ROLE_META, type Role } from '#lib/types';
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
@@ -11,8 +11,26 @@
 	let collapsed = $state(false);
 	let openMenu = $state<'tracking' | 'education' | 'accountability' | null>('tracking');
 
+	const displayUser = $derived(
+		data?.authUser ?? {
+			id: '',
+			name: 'Warga',
+			email: '',
+			role: 'warga' as const
+		}
+	);
+
+	const userRole = $derived<Role>(
+		displayUser.role && displayUser.role in ROLE_META ? (displayUser.role as Role) : 'warga'
+	);
+	const userInitials = $derived(displayUser.name?.trim() ? displayUser.name.trim().slice(0, 1) : 'W');
+	const userFirstName = $derived(displayUser.name?.trim() ? displayUser.name.trim().split(' ')[0] : 'Warga');
+	const roleMeta = $derived(ROLE_META[userRole] ?? ROLE_META.warga);
+
 	onMount(() => {
-		civic.setAuthenticatedUser(data.authUser);
+		if (data?.authUser) {
+			civic.setAuthenticatedUser(data.authUser);
+		}
 	});
 
 	function submitSearch(event: SubmitEvent) {
@@ -63,10 +81,10 @@
 			</div>
 		</nav>
 		<div class="sidebar-account" class:sidebar-account-collapsed={collapsed}>
-			<div class="avatar">{civic.user?.name.slice(0, 1)}</div>
+			<div class="avatar">{userInitials}</div>
 			{#if !collapsed}<div>
-					<strong>{civic.user?.name}</strong><small
-						>{civic.user ? ROLE_META[civic.user.role].label : ''} · Sesi demo</small
+					<strong>{displayUser.name || 'Warga'}</strong><small
+						>{roleMeta.label} · Sesi aktif</small
 					>
 				</div>{/if}
 			<button
@@ -100,8 +118,8 @@
 					>♧{#if civic.unreadCount}<b>{civic.unreadCount}</b>{/if}</a
 				>
 				<a class="profile-chip" href="/dashboard/profile"
-					><span class="avatar avatar-small">{civic.user?.name.slice(0, 1)}</span><span
-						>{civic.user?.name.split(' ')[0]}</span
+					><span class="avatar avatar-small">{userInitials}</span><span
+						>{userFirstName}</span
 					></a
 				>
 			</div>
