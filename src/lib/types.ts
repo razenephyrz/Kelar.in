@@ -238,6 +238,3 @@ export function statusToStageIndex(status: RequestStatus): number {
 			return 1;
 	}
 }
-
-console.log('Current role:', role);
-console.log('Available roles:', Object.keys(ROLE_PERMISSIONS));
