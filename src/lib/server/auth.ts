@@ -1,27 +1,30 @@
 import {
 	AUTH_STORAGE,
-	BETTER_AUTH_REQUIRE_EMAIL_VERIFICATION,
 	BETTER_AUTH_SECRET,
 	LOCAL_LURAH_EMAIL,
 	LOCAL_LURAH_NAME,
 	LOCAL_LURAH_PASSWORD,
-	ORIGIN
+	ORIGIN,
+	REQUIRE_EMAIL_VERIFICATION
 } from '$app/env/private';
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
-import { db } from '#lib/server/db/index.ts';
 import { username } from 'better-auth/plugins';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import { setLocalAccount } from './local-auth-store';
 
 const memoryDatabase = { user: [], session: [], account: [], verification: [] };
+const database =
+	AUTH_STORAGE === 'memory'
+		? memoryAdapter(memoryDatabase)
+		: drizzleAdapter((await import('#lib/server/db/index.ts')).db, { provider: 'mysql' });
 
 export const auth = betterAuth({
 	baseURL: ORIGIN,
 	secret: BETTER_AUTH_SECRET,
-	database: AUTH_STORAGE === 'memory' ? memoryAdapter(memoryDatabase) : drizzleAdapter(db, { provider: 'mysql' }),
+	database,
 	user: {
 		additionalFields: {
 			role: { type: 'string', input: false, returned: true, defaultValue: 'warga' },
@@ -30,7 +33,7 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: BETTER_AUTH_REQUIRE_EMAIL_VERIFICATION === 'true'
+		requireEmailVerification: REQUIRE_EMAIL_VERIFICATION === 'true'
 	},
 	plugins: [
 		username(),

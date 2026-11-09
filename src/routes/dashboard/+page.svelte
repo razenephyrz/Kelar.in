@@ -3,6 +3,12 @@
 	import { civic } from '#lib/store';
 	import { STATUS_META, PIPELINE_STAGES, statusToStageIndex } from '#lib/types';
 	import { daysUntil, formatDate, isOverdue, progressForStatus, timeAgo } from '../../lib/utils';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
+
+	const userName = $derived(data?.authUser?.name || civic.user?.name || 'Warga');
+	const firstName = $derived(userName.trim().split(' ')[0] || 'Warga');
 
 	const total = $derived(civic.myRequests.length);
 	const inProgress = $derived(
@@ -38,7 +44,7 @@
 			<p class="overview-date">
 				{today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
 			</p>
-			<h1 id="overview-title">{greeting},<br />{civic.user?.name.split(' ')[0]}.</h1>
+			<h1 id="overview-title">{greeting},<br />{firstName}.</h1>
 			<p class="overview-summary">
 				{total
 					? `You have ${total} requests · ${inProgress} in progress${actionNeeded ? ` · ${actionNeeded} needs your attention` : ''}.`
@@ -78,11 +84,11 @@
 							href={`/dashboard/requests/${request.id}`}
 							><span
 								class="request-status-bar"
-								style={`background:${STATUS_META[request.status].dot}`}
+								style={`background:${STATUS_META[request.status]?.dot ?? '#274C77'}`}
 							></span><span class="dashboard-request-copy"
 								><span class="dashboard-request-meta"
 									><strong>{request.id}</strong><span class={`pill ${request.status}`}
-										>{STATUS_META[request.status].label}</span
+										>{STATUS_META[request.status]?.label ?? request.status}</span
 									>{#if isOverdue(request.targetCompletionAt, request.status)}<em
 											>Past sample target</em
 										>{/if}</span
@@ -102,7 +108,7 @@
 
 		<section class="tracking-panel" aria-label="Latest progress">
 			<p class="tracking-kicker">Now tracking</p>
-			{#if latest}<p class="tracking-id">{latest.id}</p>
+			{#if latest && latest.status && STATUS_META[latest.status]}<p class="tracking-id">{latest.id}</p>
 				<h2>{latest.title}</h2>
 				<div class="tracking-progress">
 					<div class="progress-ring" style={`--progress:${progressForStatus(latest.status)}%`}>

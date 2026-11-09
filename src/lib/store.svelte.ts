@@ -57,7 +57,27 @@ const setSession = (id: string | null) => {
 	save(keys.session, id ? { userId: id } : null);
 };
 
+const setAuthenticatedUser = (input?: Pick<User, 'id' | 'name' | 'email' | 'role'>) => {
+	if (!input?.id) return;
+	const existing = users.find((item) => item.id === input.id);
+	const authenticatedUser: User = {
+		id: input.id,
+		name: input.name,
+		email: input.email,
+		passwordHash: existing?.passwordHash ?? '',
+		role: input.role,
+		createdAt: existing?.createdAt ?? new Date().toISOString(),
+		avatarColor: existing?.avatarColor ?? '#274C77'
+	};
+	users = existing
+		? users.map((item) => (item.id === input.id ? authenticatedUser : item))
+		: [authenticatedUser, ...users];
+	setSession(input.id);
+	persist();
+};
+
 export const civic = {
+	setAuthenticatedUser,
 	get user() {
 		return users.find((item) => item.id === sessionId) ?? null;
 	},
@@ -106,8 +126,9 @@ export const civic = {
 	},
 	get myRequests() {
 		const u = this.user;
+		if (!u) return [];
 		return requests
-			.filter((r) => u?.role !== 'warga' || r.ownerId === u?.id)
+			.filter((r) => u.role !== 'warga' || r.ownerId === u.id)
 			.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
 	},
 	get myNotifications() {

@@ -3,6 +3,7 @@
 	import type { ActionData } from './$types';
 	let { form }: { form: ActionData } = $props();
 	let kind = $state<'warga' | 'petugas'>('warga');
+	let staffRole = $state<'pegawai' | 'rtrw'>('pegawai');
 </script>
 
 <svelte:head><title>Daftar akun — Kelar.in</title></svelte:head>
@@ -25,10 +26,15 @@
 					<input name="phone" type="tel" inputmode="tel" placeholder="0812..." />
 				</label>
 				{#if kind === 'petugas'}
-					<label class="field">NIPD<input name="nipd" required /></label>
 					<label class="field">Jenis petugas
-						<select name="staffRole"><option value="pegawai">Pegawai kelurahan</option><option value="rtrw">RT/RW</option></select>
+						<select name="staffRole" bind:value={staffRole}>
+							<option value="pegawai">Pegawai kelurahan</option>
+							<option value="rtrw">RT/RW</option>
+						</select>
 					</label>
+					{#if staffRole === 'pegawai'}
+						<label class="field">NIPD<input name="nipd" required /></label>
+					{/if}
 				{/if}
 				<label class="field">Kelurahan<select name="kelurahanId" required><option value="">Pilih kelurahan</option><option value="kelurahan-contoh">Kelurahan Contoh</option></select></label>
 				<div class="split-fields">

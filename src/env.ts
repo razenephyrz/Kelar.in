@@ -21,6 +21,10 @@ export const variables = defineEnvVars({
 		description: 'Use memory for local development only; omit it in production.',
 		schema: (value) => value || undefined
 	},
+	REQUIRE_EMAIL_VERIFICATION: {
+		description: 'Require verified email addresses before sign-in. Set to true when email delivery is configured.',
+		schema: (value) => value || undefined
+	},
 	LOCAL_LURAH_EMAIL: {
 		description: 'Optional local-only lurah account email.',
 		schema: (value) => value || undefined
