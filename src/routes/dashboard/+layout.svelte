@@ -9,9 +9,32 @@
 	let { children, data }: LayoutProps = $props();
 	let search = $state('');
 	let collapsed = $state(false);
-	let openMenu = $state<'approval' | 'tracking' | 'education' | 'accountability' | null>(
-		'tracking'
-	);
+	type Menu = 'approval' | 'tracking' | 'education' | 'accountability';
+	let openMenu = $state<Menu | null>('tracking');
+	let mobileOpenMenu = $state<Menu | null>(null);
+
+	let isMobile = $state(false);
+	onMount(() => {
+		const checkMobile = () => {
+			isMobile = window.innerWidth <= 720;
+		};
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		return () => window.removeEventListener('resize', checkMobile);
+	});
+
+	const isMenuOpen = (menu: Menu) => {
+		if (isMobile) return mobileOpenMenu === menu;
+		return openMenu === menu && !collapsed;
+	};
+
+	const toggleMenu = (menu: Menu) => {
+		if (isMobile) {
+			mobileOpenMenu = mobileOpenMenu === menu ? null : menu;
+		} else {
+			openMenu = openMenu === menu ? null : menu;
+		}
+	};
 
 	const displayUser = $derived(
 		data?.authUser ?? {
@@ -62,16 +85,16 @@
 			{#if userRole === 'lurah'}
 				<div class="nav-group">
 					<button
-						class:nav-group-active={openMenu === 'approval'}
+						class:nav-group-active={isMenuOpen('approval')}
 						class="nav-group-toggle"
 						type="button"
-						onclick={() => (openMenu = openMenu === 'approval' ? null : 'approval')}
+						onclick={() => toggleMenu('approval')}
 					>
 						<span class="nav-glyph">✓</span>{#if !collapsed}<span>Persetujuan Petugas</span><span
-								class="nav-chevron">{openMenu === 'approval' ? '⌃' : '⌄'}</span
+								class="nav-chevron">{isMenuOpen('approval') ? '⌃' : '⌄'}</span
 							>{/if}
 					</button>
-					{#if openMenu === 'approval' && !collapsed}
+					{#if isMenuOpen('approval') && !collapsed}
 						<div class="nav-submenu">
 							<a class:nav-active={page.url.pathname.startsWith('/lurah')} href="/lurah"
 								>Verifikasi akun petugas</a
@@ -82,16 +105,18 @@
 			{/if}
 			<div class="nav-group">
 				<button
-					class:nav-group-active={openMenu === 'tracking'}
+					class:nav-group-active={isMobile
+						? mobileOpenMenu === 'tracking'
+						: openMenu === 'tracking'}
 					class="nav-group-toggle"
 					type="button"
-					onclick={() => (openMenu = openMenu === 'tracking' ? null : 'tracking')}
+					onclick={() => toggleMenu('tracking')}
 				>
 					<span class="nav-glyph">▦</span>{#if !collapsed}<span>Tracking</span><span
-							class="nav-chevron">{openMenu === 'tracking' ? '⌃' : '⌄'}</span
+							class="nav-chevron">{isMenuOpen('tracking') ? '⌃' : '⌄'}</span
 						>{/if}
 				</button>
-				{#if openMenu === 'tracking' && !collapsed}<div class="nav-submenu">
+				{#if isMenuOpen('tracking') && !collapsed}<div class="nav-submenu open">
 						<a class:nav-active={page.url.pathname === '/dashboard'} href="/dashboard">Ringkasan</a>
 						{#if civic.can('request:create')}<a
 								class:nav-active={page.url.pathname.startsWith('/dashboard/requests')}
@@ -107,16 +132,16 @@
 			</div>
 			<div class="nav-group">
 				<button
-					class:nav-group-active={openMenu === 'education'}
+					class:nav-group-active={isMenuOpen('education')}
 					class="nav-group-toggle"
 					type="button"
-					onclick={() => (openMenu = openMenu === 'education' ? null : 'education')}
+					onclick={() => toggleMenu('education')}
 				>
 					<span class="nav-glyph">▥</span>{#if !collapsed}<span>Education</span><span
-							class="nav-chevron">{openMenu === 'education' ? '⌃' : '⌄'}</span
+							class="nav-chevron">{isMenuOpen('education') ? '⌃' : '⌄'}</span
 						>{/if}
 				</button>
-				{#if openMenu === 'education' && !collapsed}<div class="nav-submenu">
+				{#if isMenuOpen('education') && !collapsed}<div class="nav-submenu open">
 						<a
 							class:nav-active={page.url.pathname.startsWith('/dashboard/documents')}
 							href="/dashboard/documents">Panduan dokumen</a
@@ -129,16 +154,16 @@
 			</div>
 			<div class="nav-group">
 				<button
-					class:nav-group-active={openMenu === 'accountability'}
+					class:nav-group-active={isMenuOpen('accountability')}
 					class="nav-group-toggle"
 					type="button"
-					onclick={() => (openMenu = openMenu === 'accountability' ? null : 'accountability')}
+					onclick={() => toggleMenu('accountability')}
 				>
 					<span class="nav-glyph">◌</span>{#if !collapsed}<span>Accountability</span><span
-							class="nav-chevron">{openMenu === 'accountability' ? '⌃' : '⌄'}</span
+							class="nav-chevron">{isMenuOpen('accountability') ? '⌃' : '⌄'}</span
 						>{/if}
 				</button>
-				{#if openMenu === 'accountability' && !collapsed}<div class="nav-submenu">
+				{#if isMenuOpen('accountability') && !collapsed}<div class="nav-submenu open">
 						{#if civic.can('content:transparency')}<a
 								class:nav-active={page.url.pathname.startsWith('/dashboard/transparansi')}
 								href="/dashboard/transparansi">Transparansi</a
