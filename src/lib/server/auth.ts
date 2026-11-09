@@ -1,4 +1,12 @@
-import { AUTH_STORAGE, BETTER_AUTH_SECRET, LOCAL_LURAH_EMAIL, LOCAL_LURAH_NAME, LOCAL_LURAH_PASSWORD, ORIGIN } from '$app/env/private';
+import {
+	AUTH_STORAGE,
+	BETTER_AUTH_REQUIRE_EMAIL_VERIFICATION,
+	BETTER_AUTH_SECRET,
+	LOCAL_LURAH_EMAIL,
+	LOCAL_LURAH_NAME,
+	LOCAL_LURAH_PASSWORD,
+	ORIGIN
+} from '$app/env/private';
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
@@ -16,11 +24,14 @@ export const auth = betterAuth({
 	database: AUTH_STORAGE === 'memory' ? memoryAdapter(memoryDatabase) : drizzleAdapter(db, { provider: 'mysql' }),
 	user: {
 		additionalFields: {
-			role: { type: 'string', input: false, returned: false, defaultValue: 'warga' },
-			status: { type: 'string', input: false, returned: false, defaultValue: 'aktif' }
+			role: { type: 'string', input: false, returned: true, defaultValue: 'warga' },
+			status: { type: 'string', input: false, returned: true, defaultValue: 'aktif' }
 		}
 	},
-	emailAndPassword: { enabled: true, requireEmailVerification: AUTH_STORAGE !== 'memory' },
+	emailAndPassword: {
+		enabled: true,
+		requireEmailVerification: BETTER_AUTH_REQUIRE_EMAIL_VERIFICATION === 'true'
+	},
 	plugins: [
 		username(),
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array

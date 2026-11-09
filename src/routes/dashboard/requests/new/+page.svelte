@@ -24,13 +24,14 @@
 			error = 'Masukkan judul singkat untuk pengajuan.';
 			return;
 		}
-		const request = civic.createRequest({
-			documentType: type,
-			title,
-			description,
-			metadata: {},
-			assignedDepartment: 'Petugas Kelurahan',
-			targetDays: targetDays ? Number(targetDays) : undefined
+		const response = await fetch('/api/warga/requests', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				serviceId: type,
+				title: title.trim(),
+				description: description.trim()
+			})
 		});
 		if (!response.ok) {
 			const result = await response.json().catch(() => null);

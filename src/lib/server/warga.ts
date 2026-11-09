@@ -57,25 +57,34 @@ export async function getCitizenRequest(userId: string, requestId: string) {
 	const rows = await db
 		.select({
 			request: serviceRequest,
-			service,
-			checklist: requestChecklist,
-			history: requestHistory
+			service
 		})
 		.from(serviceRequest)
 		.innerJoin(service, eq(serviceRequest.serviceId, service.id))
-		.leftJoin(requestChecklist, eq(requestChecklist.requestId, serviceRequest.id))
-		.leftJoin(requestHistory, eq(requestHistory.requestId, serviceRequest.id))
 		.where(and(eq(serviceRequest.id, requestId), eq(serviceRequest.ownerId, userId)))
-		.orderBy(asc(requestChecklist.position), desc(requestHistory.createdAt));
+		.limit(1);
 
 	if (!rows.length) throw error(404, 'Pengajuan tidak ditemukan');
 
 	const first = rows[0];
+	const [checklist, history] = await Promise.all([
+		db
+			.select()
+			.from(requestChecklist)
+			.where(eq(requestChecklist.requestId, requestId))
+			.orderBy(asc(requestChecklist.position)),
+		db
+			.select()
+			.from(requestHistory)
+			.where(eq(requestHistory.requestId, requestId))
+			.orderBy(desc(requestHistory.createdAt))
+	]);
+
 	return {
 		...first.request,
 		service: first.service,
-		checklist: rows.filter((row) => row.checklist).map((row) => row.checklist),
-		history: rows.filter((row) => row.history).map((row) => row.history)
+		checklist,
+		history
 	};
 }
 

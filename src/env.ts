@@ -13,6 +13,10 @@ export const variables = defineEnvVars({
 		description: 'Hex key for HMAC and encryption of NIK values. Generate with `openssl rand -hex 32`.',
 		schema: (value) => value || undefined
 	},
+	BETTER_AUTH_REQUIRE_EMAIL_VERIFICATION: {
+		description: 'Require email verification before allowing password login.',
+		schema: (value) => value || undefined
+	},
 	AUTH_STORAGE: {
 		description: 'Use memory for local development only; omit it in production.',
 		schema: (value) => value || undefined

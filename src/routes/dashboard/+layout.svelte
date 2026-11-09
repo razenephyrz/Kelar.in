@@ -9,7 +9,16 @@
 	let search = $state('');
 	let collapsed = $state(false);
 	let openMenu = $state<'tracking' | 'education' | 'accountability' | null>('tracking');
-	if (typeof window !== 'undefined' && !civic.user) goto('/login');
+
+	$effect(() => {
+		civic.setAuthenticatedUser({
+			id: data.user.id,
+			name: data.user.name,
+			email: data.user.email,
+			role: data.role,
+			createdAt: data.user.createdAt
+		});
+	});
 
 	function submitSearch(event: SubmitEvent) {
 		event.preventDefault();
@@ -62,15 +71,17 @@
 			<div class="avatar">{civic.user?.name.slice(0, 1)}</div>
 			{#if !collapsed}<div>
 					<strong>{civic.user?.name}</strong><small
-						>{civic.user ? ROLE_META[civic.user.role].label : ''} · Sesi demo</small
+						>{civic.user ? ROLE_META[civic.user.role].label : ''}</small
 					>
 				</div>{/if}
 			<button
 				class="logout"
 				aria-label="Keluar"
 				onclick={() => {
-					civic.logout();
-					goto('/');
+					void fetch('/logout', { method: 'POST' }).finally(() => {
+						civic.logout();
+						goto('/');
+					});
 				}}>↪</button
 			>
 		</div>

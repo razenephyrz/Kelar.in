@@ -15,19 +15,29 @@
 		history: { newStatus: keyof typeof STATUS_META; explanation: string; actorName: string; createdAt: string | Date }[];
 	} | null>(null);
 	let loadError = $state('');
+	let loading = $state(true);
 	onMount(async () => {
-		const response = await fetch(`/api/warga/requests/${page.params.id}`);
-		if (!response.ok) {
-			loadError = 'Pengajuan tidak dapat dimuat.';
-			return;
+		try {
+			const response = await fetch(`/api/warga/requests/${page.params.id}`);
+			if (!response.ok) {
+				loadError =
+					response.status === 404
+						? 'Pengajuan tidak ditemukan atau bukan milik akun ini.'
+						: 'Pengajuan tidak dapat dimuat.';
+				return;
+			}
+			const data = await response.json();
+			request = {
+				...data,
+				documentType: data.service?.name,
+				checklist: data.checklist ?? [],
+				history: data.history ?? []
+			};
+		} catch {
+			loadError = 'Pengajuan tidak dapat dimuat. Periksa koneksi lalu coba lagi.';
+		} finally {
+			loading = false;
 		}
-		const data = await response.json();
-		request = {
-			...data,
-			documentType: data.service?.name,
-			checklist: data.checklist ?? [],
-			history: data.history ?? []
-		};
 	});
 	let note = $state('');
 	let message = $state('');
@@ -53,7 +63,9 @@
 	}
 </script>
 
-{#if loadError}<p class="error" role="alert">{loadError}</p>{:else if request}<header class="app-header">
+{#if loading}<p class="muted">Memuat detail pengajuan...</p>
+{:else if loadError}<p class="error" role="alert">{loadError}</p>
+{:else if request}<header class="app-header">
 		<div>
 			<p class="eyebrow">{request.id}</p>
 			<h1>{request.title}</h1>
