@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { civic } from '#lib/store';
 	import { STATUS_META, type RequestStatus } from '#lib/types';
 	import { formatDate, isOverdue } from '../../../lib/utils';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	let query = $state(page.url.searchParams.get('q') ?? '');
 	let status = $state<'all' | RequestStatus>('all');
@@ -21,11 +23,11 @@
 	];
 	const requestTypes = $derived([
 		'all',
-		...new Set(civic.myRequests.map((request) => request.documentType))
+		...new Set(data.requests.map((request) => request.documentType))
 	]);
 	const filteredRequests = $derived.by(() => {
 		const needle = query.trim().toLowerCase();
-		return civic.myRequests
+		return data.requests
 			.filter((request) => {
 				const matchesQuery =
 					!needle || `${request.id} ${request.title}`.toLowerCase().includes(needle);
@@ -38,16 +40,16 @@
 			.sort((a, b) => {
 				const first =
 					sort === 'target'
-						? a.targetCompletionAt
+						? new Date(a.targetCompletionAt).toISOString()
 						: sort === 'submitted'
-							? a.createdAt
-							: a.updatedAt;
+							? new Date(a.createdAt).toISOString()
+							: new Date(a.updatedAt).toISOString();
 				const second =
 					sort === 'target'
-						? b.targetCompletionAt
+						? new Date(b.targetCompletionAt).toISOString()
 						: sort === 'submitted'
-							? b.createdAt
-							: b.updatedAt;
+							? new Date(b.createdAt).toISOString()
+							: new Date(b.updatedAt).toISOString();
 				return +new Date(second) - +new Date(first);
 			});
 	});
@@ -66,7 +68,7 @@
 			>
 		</div>
 		<div class="requests-hero-note">
-			<strong>{civic.myRequests.length}</strong>
+			<strong>{data.requests.length}</strong>
 			<span>Total pengajuan</span>
 			<small>Data tersimpan di ruang layanan kamu.</small>
 		</div>
@@ -79,7 +81,7 @@
 				<h2 id="filter-title">Daftar pengajuan</h2>
 			</div>
 			<p class="result-count">
-				<strong>{filteredRequests.length}</strong> dari {civic.myRequests.length} pengajuan tampil
+				<strong>{filteredRequests.length}</strong> dari {data.requests.length} pengajuan tampil
 			</p>
 		</div>
 
@@ -153,16 +155,7 @@
 								</small>
 							</td>
 							<td>
-								{#if ['draft', 'submitted', 'action_required'].includes(request.status)}
-									<button
-										class="delete-button"
-										type="button"
-										onclick={() => civic.deleteRequest(request.id)}
-										aria-label={`Hapus ${request.id}`}>Hapus</button
-									>
-								{:else}
-									<a class="table-action" href={`/dashboard/requests/${request.id}`}>Buka</a>
-								{/if}
+								<a class="table-action" href={`/dashboard/requests/${request.id}`}>Buka</a>
 							</td>
 						</tr>
 					{:else}

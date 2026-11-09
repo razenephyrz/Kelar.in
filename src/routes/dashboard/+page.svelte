@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { civic } from '#lib/store';
 	import { STATUS_META, PIPELINE_STAGES, statusToStageIndex } from '#lib/types';
 	import { daysUntil, formatDate, isOverdue, progressForStatus, timeAgo } from '../../lib/utils';

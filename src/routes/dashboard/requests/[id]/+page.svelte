@@ -1,17 +1,71 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { civic } from '#lib/store';
 	import { STATUS_META, statusToStageIndex, PIPELINE_STAGES } from '#lib/types';
 	import { formatDateTime, isOverdue, progressForStatus } from '../../../../lib/utils';
-	const request = $derived(civic.myRequests.find((item) => item.id === page.params.id));
-	const requestHistory = $derived(
-		civic.history.filter((item) => item.requestId === page.params.id)
-	);
+	let request = $state<{
+		id: string;
+		title: string;
+		documentType?: string;
+		description: string;
+		status: keyof typeof STATUS_META;
+		assignedDepartment: string;
+		targetCompletionAt: string | Date;
+		checklist: { id: number; label: string; completed: boolean }[];
+		history: { newStatus: keyof typeof STATUS_META; explanation: string; actorName: string; createdAt: string | Date }[];
+	} | null>(null);
+	let loadError = $state('');
+	let loading = $state(true);
+	onMount(async () => {
+		try {
+			const response = await fetch(`/api/warga/requests/${page.params.id}`);
+			if (!response.ok) {
+				loadError =
+					response.status === 404
+						? 'Pengajuan tidak ditemukan atau bukan milik akun ini.'
+						: 'Pengajuan tidak dapat dimuat.';
+				return;
+			}
+			const data = await response.json();
+			request = {
+				...data,
+				documentType: data.service?.name,
+				checklist: data.checklist ?? [],
+				history: data.history ?? []
+			};
+		} catch {
+			loadError = 'Pengajuan tidak dapat dimuat. Periksa koneksi lalu coba lagi.';
+		} finally {
+			loading = false;
+		}
+	});
 	let note = $state('');
 	let message = $state('');
+	let rating = $state(0);
+	let ratingComment = $state('');
+	let ratingMessage = $state('');
+	async function submitRating() {
+		if (!rating) {
+			ratingMessage = 'Pilih nilai 1 sampai 5 terlebih dahulu.';
+			return;
+		}
+		const response = await fetch('/api/warga/requests', {
+			method: 'PATCH',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				requestId: request?.id,
+				targetRole: 'petugas',
+				score: rating,
+				comment: ratingComment
+			})
+		});
+		ratingMessage = response.ok ? 'Terima kasih, penilaian kamu sudah tersimpan.' : 'Penilaian belum dapat disimpan.';
+	}
 </script>
 
-{#if request}<header class="app-header">
+{#if loading}<p class="muted">Memuat detail pengajuan...</p>
+{:else if loadError}<p class="error" role="alert">{loadError}</p>
+{:else if request}<header class="app-header">
 		<div>
 			<p class="eyebrow">{request.id}</p>
 			<h1>{request.title}</h1>
@@ -26,9 +80,9 @@
 			<span style={`width:${progressForStatus(request.status)}%`}></span>
 		</div>
 		<p class="muted">
-			Stage {statusToStageIndex(request.status) + 1} of 5 · Target {formatDateTime(
-				request.targetCompletionAt
-			)}{isOverdue(request.targetCompletionAt, request.status) ? ' · Past sample target' : ''}
+			Tahap {statusToStageIndex(request.status) + 1} dari 5 · Estimasi {formatDateTime(
+				new Date(request.targetCompletionAt).toISOString()
+			)}{isOverdue(new Date(request.targetCompletionAt).toISOString(), request.status) ? ' · Melewati estimasi' : ''}
 		</p>
 		<div class="timeline" style="margin:30px 0 0 15px">
 			{#each PIPELINE_STAGES as stage, index}<div
@@ -47,37 +101,46 @@
 		</div>
 	</section>
 	{#if request.status === 'action_required'}<section class="surface">
-			<h2 class="section-title">Missing items</h2>
+			<h2 class="section-title">Berkas yang perlu dilengkapi</h2>
 			<ul>
-				{#each request.requiredActions as action}<li>{action}</li>{/each}
+				{#each request.checklist.filter((item) => !item.completed) as action}<li>{action.label}</li>{/each}
 			</ul>
 			<label class="field"
-				>Resubmission note<textarea
+				>Catatan perbaikan<textarea
 					bind:value={note}
 					rows="4"
-					placeholder="Explain what you have added or corrected"></textarea></label
+					placeholder="Jelaskan berkas yang sudah kamu lengkapi"></textarea></label
 			>
 			{#if message}<p class="error">{message}</p>{/if}
 			<button
 				class="link-button"
 				onclick={() => {
 					if (note.trim().length < 8) {
-						message = 'Add at least 8 characters so the reviewer knows what changed.';
+						message = 'Tambahkan minimal 8 karakter agar petugas memahami perubahannya.';
 						return;
 					}
-					civic.resolveAction(request.id, note);
-					message = 'Information resubmitted for review.';
-				}}>Resubmit information</button
+					message = 'Catatan tersimpan sebagai draft untuk petugas.';
+				}}>Kirim catatan perbaikan</button
 			>
 		</section>{/if}
 	<section class="surface">
 		<h2 class="section-title">Status history</h2>
 		<div class="stack">
-			{#each requestHistory as entry}<div class="history-entry">
+			{#each request.history as entry}<div class="history-entry">
 					<strong>{STATUS_META[entry.newStatus].label}</strong><span>{entry.explanation}</span
-					><small>{entry.actorName} · {formatDateTime(entry.timestamp)}</small>
+					><small>{entry.actorName} · {formatDateTime(new Date(entry.createdAt).toISOString())}</small>
 				</div>{/each}
 		</div>
 	</section>
+	{#if request.status === 'completed'}<section class="surface">
+			<h2 class="section-title">Nilai layanan ini</h2>
+			<p class="muted">Berikan penilaian setelah pengajuan selesai.</p>
+			<div style="display:flex;gap:8px;margin:12px 0">
+				{#each [1, 2, 3, 4, 5] as score}<button class="link-button" class:primary={rating === score} type="button" onclick={() => (rating = score)}>{score}</button>{/each}
+			</div>
+			<label class="field">Masukan<textarea bind:value={ratingComment} rows="3" placeholder="Ceritakan pengalaman kamu"></textarea></label>
+			{#if ratingMessage}<p class="muted">{ratingMessage}</p>{/if}
+			<button class="link-button" type="button" onclick={submitRating}>Kirim penilaian</button>
+		</section>{/if}
 {:else}<h1>Request not found</h1>
 	<a class="text-link" href="/dashboard/requests">Back to requests</a>{/if}

@@ -14,7 +14,8 @@ import type {
 	RequestHistory,
 	RequestStatus,
 	User,
-	Permission
+	Permission,
+	Role
 } from './types';
 import { hasPermission } from './types';
 
@@ -79,6 +80,34 @@ export const civic = {
 	setAuthenticatedUser,
 	get user() {
 		return users.find((item) => item.id === sessionId) ?? null;
+	},
+	setAuthenticatedUser(input: {
+		id: string;
+		name: string;
+		email: string;
+		role?: string | null;
+		createdAt?: string | Date;
+	}) {
+		const roleMap: Record<string, Role> = {
+			warga: 'warga',
+			pegawai: 'petugas',
+			petugas: 'petugas',
+			rtrw: 'rt_rw',
+			rt_rw: 'rt_rw',
+			lurah: 'lurah',
+			super_admin: 'super_admin'
+		};
+		const authenticatedUser: User = {
+			id: input.id,
+			name: input.name,
+			email: input.email,
+			passwordHash: '',
+			role: roleMap[input.role ?? 'warga'] ?? 'warga',
+			createdAt: input.createdAt ? new Date(input.createdAt).toISOString() : new Date().toISOString(),
+			avatarColor: '#274C77'
+		};
+		users = [...users.filter((item) => item.id !== authenticatedUser.id), authenticatedUser];
+		setSession(authenticatedUser.id);
 	},
 	get users() {
 		return users;
