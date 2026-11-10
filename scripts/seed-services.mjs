@@ -10,14 +10,107 @@ const connection = await mysql.createConnection({
 });
 
 const services = [
-	['ktp', 'KTP', 'Administrasi Kependudukan', 'Pengajuan pembuatan atau perubahan KTP dengan estimasi proses yang jelas.', 7, '7 hari kerja', 'Petugas Kelurahan', ['Kartu Keluarga', 'Akta Kelahiran', 'Pas foto terbaru'], ['petugas']],
-	['akta-kematian', 'Akta Kematian', 'Pencatatan Sipil', 'Pencatatan kematian dan penerbitan akta kematian.', 5, '5 hari kerja', 'Petugas Kelurahan', ['KTP almarhum', 'Kartu Keluarga', 'Surat keterangan kematian'], ['petugas', 'lurah']],
-	['slip-gaji', 'Slip Gaji', 'Administrasi Umum', 'Penerbitan surat keterangan penghasilan atau slip gaji untuk kebutuhan warga.', 3, '3 hari kerja', 'Petugas Kelurahan', ['KTP', 'Kartu Keluarga', 'Surat pengantar instansi'], ['petugas', 'lurah']],
-	['surat-domisili', 'Surat Domisili', 'Administrasi Kependudukan', 'Surat keterangan domisili dengan pengantar dan persetujuan RT/RW.', 3, '3 hari kerja', 'Petugas Kelurahan', ['KTP', 'Kartu Keluarga', 'Surat pengantar RT/RW'], ['petugas', 'rt_rw', 'lurah']],
-	['belum-menikah', 'Surat Keterangan Belum Menikah', 'Administrasi Kependudukan', 'Surat keterangan status belum menikah untuk kebutuhan administrasi warga.', 3, '3 hari kerja', 'Petugas Kelurahan', ['KTP', 'Kartu Keluarga', 'Surat pengantar RT/RW'], ['petugas', 'lurah']]
+	[
+		'ktp',
+		'Pembuatan atau Perubahan KTP',
+		'Administrasi Kependudukan',
+		'Pengajuan pembuatan KTP elektronik baru, perubahan data, atau penggantian KTP.',
+		7,
+		'7 hari kerja',
+		'Petugas Kelurahan',
+		['Kartu Keluarga', 'Akta Kelahiran', 'Pas foto terbaru'],
+		['petugas']
+	],
+	[
+		'kartu-keluarga',
+		'Pembuatan atau Perubahan Kartu Keluarga',
+		'Administrasi Kependudukan',
+		'Pengajuan penerbitan atau perubahan susunan dan data anggota keluarga.',
+		7,
+		'7 hari kerja',
+		'Petugas Kelurahan',
+		['KTP anggota keluarga', 'Akta kelahiran atau buku nikah', 'Surat pengantar RT/RW'],
+		['petugas', 'lurah']
+	],
+	[
+		'sktm',
+		'Surat Keterangan Tidak Mampu (SKTM)',
+		'Surat Keterangan',
+		'Surat keterangan kondisi sosial ekonomi untuk keperluan pendidikan, kesehatan, atau bantuan.',
+		3,
+		'3 hari kerja',
+		'Petugas Kelurahan',
+		['KTP', 'Kartu Keluarga', 'Surat pengantar RT/RW'],
+		['petugas', 'rt_rw', 'lurah']
+	],
+	[
+		'akta-kelahiran',
+		'Akta Kelahiran',
+		'Pencatatan Sipil',
+		'Pengajuan surat pengantar dan penerbitan akta kelahiran.',
+		5,
+		'5 hari kerja',
+		'Petugas Kelurahan',
+		['Kartu Keluarga', 'Surat keterangan lahir', 'KTP orang tua', 'Buku nikah orang tua'],
+		['petugas', 'lurah']
+	],
+	[
+		'akta-kematian',
+		'Akta Kematian',
+		'Pencatatan Sipil',
+		'Pencatatan kematian dan penerbitan akta kematian.',
+		5,
+		'5 hari kerja',
+		'Petugas Kelurahan',
+		['KTP almarhum', 'Kartu Keluarga', 'Surat keterangan kematian'],
+		['petugas', 'lurah']
+	],
+	[
+		'surat-domisili',
+		'Surat Keterangan Domisili',
+		'Surat Keterangan',
+		'Surat keterangan domisili dengan pengantar dan persetujuan RT/RW.',
+		3,
+		'3 hari kerja',
+		'Petugas Kelurahan',
+		['KTP', 'Kartu Keluarga', 'Surat pengantar RT/RW'],
+		['petugas', 'rt_rw', 'lurah']
+	],
+	[
+		'surat-usaha',
+		'Surat Keterangan Usaha',
+		'Administrasi Usaha',
+		'Surat keterangan usaha untuk kebutuhan perizinan, pembiayaan, atau administrasi lainnya.',
+		3,
+		'3 hari kerja',
+		'Petugas Kelurahan',
+		['KTP', 'Kartu Keluarga', 'Surat pengantar RT/RW', 'Foto tempat usaha'],
+		['petugas', 'rt_rw', 'lurah']
+	],
+	[
+		'belum-menikah',
+		'Surat Keterangan Belum Menikah',
+		'Surat Keterangan',
+		'Surat keterangan status belum menikah untuk kebutuhan administrasi warga.',
+		3,
+		'3 hari kerja',
+		'Petugas Kelurahan',
+		['KTP', 'Kartu Keluarga', 'Surat pengantar RT/RW'],
+		['petugas', 'lurah']
+	]
 ];
 
-for (const [id, name, category, description, days, target, department, checklist, approvals] of services) {
+for (const [
+	id,
+	name,
+	category,
+	description,
+	days,
+	target,
+	department,
+	checklist,
+	approvals
+] of services) {
 	await connection.query(
 		'INSERT INTO service (id, name, category, description, processing_days, processing_target, responsible_department) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name), category=VALUES(category), description=VALUES(description), processing_days=VALUES(processing_days), processing_target=VALUES(processing_target), responsible_department=VALUES(responsible_department)',
 		[id, name, category, description, days, target, department]

@@ -12,6 +12,8 @@ import {
 	serviceRequest
 } from '#lib/server/db/schema.ts';
 import type { RequestEvent } from '@sveltejs/kit';
+import { AUTH_STORAGE } from '$app/env/private';
+import { getCatalogServices } from './service-catalog';
 
 export function requireAuthenticatedUser(event: RequestEvent) {
 	if (!event.locals.user) {
@@ -21,15 +23,32 @@ export function requireAuthenticatedUser(event: RequestEvent) {
 }
 
 export async function listServices() {
-	const services = await db.select().from(service).where(eq(service.active, true)).orderBy(asc(service.name));
-	const checklists = await db.select().from(serviceChecklist).orderBy(asc(serviceChecklist.position));
-	const approvals = await db.select().from(serviceApproval).orderBy(asc(serviceApproval.position));
+	if (AUTH_STORAGE === 'memory') return getCatalogServices();
 
-	return services.map((item) => ({
-		...item,
-		checklist: checklists.filter((entry) => entry.serviceId === item.id),
-		approvals: approvals.filter((entry) => entry.serviceId === item.id)
-	}));
+	try {
+		const services = await db
+			.select()
+			.from(service)
+			.where(eq(service.active, true))
+			.orderBy(asc(service.name));
+		const checklists = await db
+			.select()
+			.from(serviceChecklist)
+			.orderBy(asc(serviceChecklist.position));
+		const approvals = await db
+			.select()
+			.from(serviceApproval)
+			.orderBy(asc(serviceApproval.position));
+
+		return services.map((item) => ({
+			...item,
+			checklist: checklists.filter((entry) => entry.serviceId === item.id),
+			approvals: approvals.filter((entry) => entry.serviceId === item.id)
+		}));
+	} catch (error) {
+		console.error('Gagal memuat layanan dari database, memakai katalog bawaan:', error);
+		return getCatalogServices();
+	}
 }
 
 export async function listCitizenRequests(userId: string) {
@@ -117,7 +136,8 @@ export async function createCitizenRating(
 		.where(and(eq(serviceRequest.id, input.requestId), eq(serviceRequest.ownerId, userId)))
 		.limit(1);
 	if (!request[0]) throw error(404, 'Pengajuan tidak ditemukan');
-	if (request[0].status !== 'completed') throw error(409, 'Rating tersedia setelah pengajuan selesai');
+	if (request[0].status !== 'completed')
+		throw error(409, 'Rating tersedia setelah pengajuan selesai');
 
 	await db.insert(requestRating).values({
 		requestId: input.requestId,
