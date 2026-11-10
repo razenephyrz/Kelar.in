@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	let notifications = $state<{ id: number; title: string; message: string; isRead: boolean }[]>([]);
 	let error = $state('');
+	const unreadCount = $derived(notifications.filter((notification) => !notification.isRead).length);
+
 	onMount(async () => {
 		const response = await fetch('/api/warga/inbox');
 		if (!response.ok) {
@@ -25,27 +27,64 @@
 		);
 	}
 	async function markAllRead() {
-		await Promise.all(notifications.filter((item) => !item.isRead).map((item) => markRead(item.id)));
+		await Promise.all(
+			notifications.filter((item) => !item.isRead).map((item) => markRead(item.id))
+		);
 	}
 </script>
 
-<header class="app-header">
-	<div>
-		<p class="eyebrow">Pembaruan</p>
-		<h1>Kotak masuk</h1>
-		<p class="muted">Perubahan status dan pengingat pengajuan kamu.</p>
-	</div>
-	<button class="link-button" onclick={markAllRead}>Tandai semua dibaca</button>
-</header>
-{#if error}<p class="error" role="alert">{error}</p>{/if}
-<section class="surface">
-	<div class="stack">
-		{#each notifications as notification}<button
-				style="text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:14px 0;cursor:pointer"
-				onclick={() => markRead(notification.id)}
-				><strong>{notification.title}</strong>
-				<p class="muted">{notification.message}</p>
-				{#if !notification.isRead}<span class="pill">Baru</span>{/if}</button
-			>{:else}<p class="muted">Your inbox is clear.</p>{/each}
-	</div>
-</section>
+<div class="requests-page">
+	<section class="requests-hero" aria-labelledby="inbox-title">
+		<div>
+			<p class="requests-kicker">Pembaruan</p>
+			<h1 id="inbox-title">Kotak masuk</h1>
+			<p>Perubahan status dan pengingat pengajuan kamu.</p>
+			<button
+				class="hero-new-request inbox-mark-all"
+				type="button"
+				onclick={markAllRead}
+				disabled={!unreadCount}
+			>
+				Tandai semua dibaca
+			</button>
+		</div>
+		<div class="requests-hero-note">
+			<strong>{notifications.length}</strong>
+			<span>Pesan masuk</span>
+			<small>{unreadCount} belum dibaca</small>
+		</div>
+	</section>
+
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
+
+	<section class="surface requests-panel" aria-labelledby="inbox-list-title">
+		<div class="requests-panel-heading">
+			<div>
+				<p class="requests-kicker">Pembaruan akun</p>
+				<h2 id="inbox-list-title">Daftar pesan</h2>
+			</div>
+			<p class="result-count"><strong>{unreadCount}</strong> pesan belum dibaca</p>
+		</div>
+
+		<div class="stack inbox-list">
+			{#each notifications as notification}
+				<button
+					class="inbox-message"
+					class:inbox-message-read={notification.isRead}
+					type="button"
+					onclick={() => markRead(notification.id)}
+				>
+					<span class="inbox-message-copy">
+						<strong>{notification.title}</strong>
+						<span class="inbox-message-text">{notification.message}</span>
+					</span>
+					<span class="inbox-message-status" class:inbox-message-unread={!notification.isRead}>
+						{notification.isRead ? 'Sudah dibaca' : 'Baru'}
+					</span>
+				</button>
+			{:else}
+				<p class="inbox-empty">Belum ada pesan.</p>
+			{/each}
+		</div>
+	</section>
+</div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { civic } from '#lib/store';
@@ -14,18 +14,23 @@
 	let mobileOpenMenu = $state<Menu | null>(null);
 
 	let isMobile = $state(false);
+	let mobileNavOpen = $state(false);
+	const showLabels = $derived(isMobile || !collapsed);
 	onMount(() => {
 		const checkMobile = () => {
-			isMobile = window.innerWidth <= 720;
+			isMobile = window.innerWidth <= 960;
 		};
 		checkMobile();
 		window.addEventListener('resize', checkMobile);
 		return () => window.removeEventListener('resize', checkMobile);
 	});
+	afterNavigate(() => {
+		mobileNavOpen = false;
+	});
 
 	const isMenuOpen = (menu: Menu) => {
 		if (isMobile) return mobileOpenMenu === menu;
-		return openMenu === menu && !collapsed;
+		return openMenu === menu && showLabels;
 	};
 
 	const toggleMenu = (menu: Menu) => {
@@ -68,20 +73,30 @@
 	}
 </script>
 
-<div class="app-shell" class:sidebar-collapsed={collapsed}>
-	<aside class="sidebar">
+<div class="app-shell" class:sidebar-collapsed={collapsed && !isMobile}>
+	<div class="sidebar-frame">
+	<aside class="sidebar" class:mobile-open={mobileNavOpen}>
 		<div class="sidebar-brand-wrap">
 			<a class="brand" href="/"><span class="brand-mark">K</span><span>Kelar.in</span></a>
 			<p>Pelacakan layanan kelurahan</p>
+			<button
+				class="sidebar-mobile-toggle"
+				type="button"
+				aria-expanded={mobileNavOpen}
+				aria-controls="dashboard-nav"
+				onclick={() => (mobileNavOpen = !mobileNavOpen)}
+			>
+				{mobileNavOpen ? 'Tutup' : 'Menu'}
+			</button>
 		</div>
 		{#if civic.can('request:create')}<a
 				class="sidebar-new-request"
 				href="/dashboard/requests/new"
 				aria-label="Pengajuan baru"
-				><span>+</span>{#if !collapsed}
+				><span>+</span>{#if showLabels}
 					Pengajuan baru{/if}</a
 			>{/if}
-		<nav aria-label="Navigasi dashboard">
+		<nav id="dashboard-nav" aria-label="Navigasi dashboard">
 			{#if userRole === 'lurah'}
 				<div class="nav-group">
 					<button
@@ -90,11 +105,11 @@
 						type="button"
 						onclick={() => toggleMenu('approval')}
 					>
-						<span class="nav-glyph">✓</span>{#if !collapsed}<span>Persetujuan Petugas</span><span
+						<span class="nav-glyph">✓</span>{#if showLabels}<span>Persetujuan Petugas</span><span
 								class="nav-chevron">{isMenuOpen('approval') ? '⌃' : '⌄'}</span
 							>{/if}
 					</button>
-					{#if isMenuOpen('approval') && !collapsed}
+					{#if isMenuOpen('approval') && showLabels}
 						<div class="nav-submenu">
 							<a class:nav-active={page.url.pathname.startsWith('/lurah')} href="/lurah"
 								>Verifikasi akun petugas</a
@@ -112,11 +127,11 @@
 					type="button"
 					onclick={() => toggleMenu('tracking')}
 				>
-					<span class="nav-glyph">▦</span>{#if !collapsed}<span>Tracking</span><span
+					<span class="nav-glyph">▦</span>{#if showLabels}<span>Tracking</span><span
 							class="nav-chevron">{isMenuOpen('tracking') ? '⌃' : '⌄'}</span
 						>{/if}
 				</button>
-				{#if isMenuOpen('tracking') && !collapsed}<div class="nav-submenu open">
+				{#if isMenuOpen('tracking') && showLabels}<div class="nav-submenu open">
 						<a class:nav-active={page.url.pathname === '/dashboard'} href="/dashboard">Ringkasan</a>
 						{#if civic.can('request:create')}<a
 								class:nav-active={page.url.pathname.startsWith('/dashboard/requests')}
@@ -137,11 +152,11 @@
 					type="button"
 					onclick={() => toggleMenu('education')}
 				>
-					<span class="nav-glyph">▥</span>{#if !collapsed}<span>Education</span><span
+					<span class="nav-glyph">▥</span>{#if showLabels}<span>Education</span><span
 							class="nav-chevron">{isMenuOpen('education') ? '⌃' : '⌄'}</span
 						>{/if}
 				</button>
-				{#if isMenuOpen('education') && !collapsed}<div class="nav-submenu open">
+				{#if isMenuOpen('education') && showLabels}<div class="nav-submenu open">
 						<a
 							class:nav-active={page.url.pathname.startsWith('/dashboard/documents')}
 							href="/dashboard/documents">Panduan dokumen</a
@@ -159,11 +174,11 @@
 					type="button"
 					onclick={() => toggleMenu('accountability')}
 				>
-					<span class="nav-glyph">◌</span>{#if !collapsed}<span>Accountability</span><span
+					<span class="nav-glyph">◌</span>{#if showLabels}<span>Accountability</span><span
 							class="nav-chevron">{isMenuOpen('accountability') ? '⌃' : '⌄'}</span
 						>{/if}
 				</button>
-				{#if isMenuOpen('accountability') && !collapsed}<div class="nav-submenu open">
+				{#if isMenuOpen('accountability') && showLabels}<div class="nav-submenu open">
 						{#if civic.can('content:transparency')}<a
 								class:nav-active={page.url.pathname.startsWith('/dashboard/transparansi')}
 								href="/dashboard/transparansi">Transparansi</a
@@ -179,9 +194,9 @@
 					</div>{/if}
 			</div>
 		</nav>
-		<div class="sidebar-account" class:sidebar-account-collapsed={collapsed}>
+		<div class="sidebar-account" class:sidebar-account-collapsed={collapsed && !isMobile}>
 			<div class="avatar">{userInitials}</div>
-			{#if !collapsed}<div>
+			{#if showLabels}<div>
 					<strong>{displayUser.name || 'Warga'}</strong><small>{roleMeta.label} · Sesi aktif</small>
 				</div>{/if}
 			<button
@@ -194,14 +209,15 @@
 				}}>↪</button
 			>
 		</div>
-		<button
-			class="sidebar-collapse"
-			type="button"
-			onclick={() => (collapsed = !collapsed)}
-			aria-label={collapsed ? 'Buka bilah samping' : 'Ciutkan bilah samping'}
-			>{collapsed ? '›' : '‹'}</button
-		>
 	</aside>
+	<button
+		class="sidebar-collapse"
+		type="button"
+		onclick={() => (collapsed = !collapsed)}
+		aria-label={collapsed ? 'Buka bilah samping' : 'Ciutkan bilah samping'}
+		>{collapsed ? '›' : '‹'}</button
+	>
+	</div>
 	<main class="app-main">
 		<header class="dashboard-topbar">
 			<form class="dashboard-search" onsubmit={submitSearch} role="search">

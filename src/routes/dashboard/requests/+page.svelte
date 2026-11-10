@@ -173,69 +173,6 @@
 </div>
 
 <style>
-	.requests-page {
-		display: grid;
-		gap: 20px;
-	}
-
-	.requests-hero::before,
-	.requests-hero::after {
-		display: none;
-	}
-
-	.requests-hero {
-		display: flex;
-		align-items: end;
-		justify-content: space-between;
-		gap: 24px;
-	}
-
-	.requests-hero-note {
-		display: grid;
-		min-width: 190px;
-		gap: 4px;
-		padding: 18px;
-		background: rgba(255, 255, 255, 0.72);
-	}
-
-	.requests-hero-note strong {
-		font: 650 38px/1 Fraunces, serif;
-		color: var(--navy);
-	}
-
-	.requests-hero-note span {
-		font-size: 12px;
-		font-weight: 700;
-	}
-
-	.requests-hero-note small {
-		margin-top: 6px;
-		color: #526a7d;
-		font-size: 10px;
-		line-height: 1.5;
-	}
-
-	.requests-panel-heading {
-		display: flex;
-		align-items: end;
-		justify-content: space-between;
-		gap: 20px;
-		margin-bottom: 20px;
-	}
-
-	.requests-panel-heading h2 {
-		margin: 0;
-		font: 500 28px/1.1 Fraunces, serif;
-	}
-
-	.requests-panel-heading .requests-kicker {
-		margin-bottom: 7px;
-	}
-
-	.requests-panel-heading .result-count {
-		margin: 0;
-	}
-
 	.field {
 		display: grid;
 		gap: 7px;
@@ -301,20 +238,4 @@
 		font-size: 11px;
 	}
 
-	@media (max-width: 720px) {
-		.requests-hero {
-			align-items: start;
-			flex-direction: column;
-			padding: 30px 24px;
-		}
-
-		.requests-hero-note {
-			width: 100%;
-		}
-
-		.requests-panel-heading {
-			align-items: start;
-			flex-direction: column;
-		}
-	}
 </style>
